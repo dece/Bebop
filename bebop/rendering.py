@@ -205,25 +205,20 @@ def render_lines(metalines, window, max_width):
         line = line[:max_width - 1]
         line_type = meta["type"]
         if line_type == LineType.TITLE_1:
-            attributes = curses.color_pair(ColorPair.TITLE_1) | curses.A_BOLD
-            window.addstr(line, attributes)
+            attr = curses.color_pair(ColorPair.TITLE_1) | curses.A_BOLD
         elif line_type == LineType.TITLE_2:
-            attributes = curses.color_pair(ColorPair.TITLE_2) | curses.A_BOLD
-            window.addstr(line, attributes)
+            attr = curses.color_pair(ColorPair.TITLE_2) | curses.A_BOLD
         elif line_type == LineType.TITLE_3:
-            window.addstr(line, curses.color_pair(ColorPair.TITLE_3))
+            attr = curses.color_pair(ColorPair.TITLE_3)
         elif line_type == LineType.LINK:
-            window.addstr(line, curses.color_pair(ColorPair.LINK))
+            attr = curses.color_pair(ColorPair.LINK)
         elif line_type == LineType.PREFORMATTED:
-            window.addstr(line, curses.color_pair(ColorPair.PREFORMATTED))
+            attr = curses.color_pair(ColorPair.PREFORMATTED)
         elif line_type == LineType.BLOCKQUOTE:
-            attributes = (
-                curses.color_pair(ColorPair.BLOCKQUOTE)
-                | curses.A_ITALIC
-            )
-            window.addstr(line, attributes)
+            attr = curses.color_pair(ColorPair.BLOCKQUOTE) | curses.A_ITALIC
         else:  # includes LineType.PARAGRAPH
-            window.addstr(line)
+            attr = curses.color_pair(ColorPair.NORMAL)
+        window.addstr(line, attr)
         if line_index < num_lines - 1:
             window.addstr("\n")
     return num_lines, max_width
