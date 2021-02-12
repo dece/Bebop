@@ -149,6 +149,10 @@ class Response:
 
     HEADER_RE = re.compile(r"(\d{2}) (\S*)")
 
+    @property
+    def generic_code(self):
+        return Response.get_generic_code(self.code)
+
     @staticmethod
     def parse(data):
         """Parse a received response."""
@@ -161,7 +165,7 @@ class Response:
         if not match:
             return None
         code, meta = match.groups()
-        response = Response(StatusCode(code), meta=meta)
+        response = Response(StatusCode(int(code)), meta=meta)
         if Response.get_generic_code(response.code) == StatusCode.SUCCESS:
             content_offset = response_header_len + len(LINE_TERM)
             response.content = data[content_offset:]

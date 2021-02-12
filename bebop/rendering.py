@@ -2,7 +2,7 @@ import curses
 import string
 from enum import IntEnum
 
-from bebop.colors import ColorPairs
+from bebop.colors import ColorPair
 from bebop.gemtext import Blockquote, Link, Paragraph, Preformatted, Title
 
 
@@ -83,9 +83,9 @@ def format_title(title: Title, context: dict):
         lines = (line_template.format(line) for line in wrapped)
     else:
         if title.level == 2:
-            text = title.text
-        else:
             text = "  " + title.text
+        else:
+            text = title.text
         lines = wrap_words(text, context["width"])
     # Title levels match the type constants of titles.
     return [({"type": LineType(title.level)}, line) for line in lines]
@@ -205,20 +205,20 @@ def render_lines(metalines, window, max_width):
         line = line[:max_width - 1]
         line_type = meta["type"]
         if line_type == LineType.TITLE_1:
-            attributes = curses.color_pair(ColorPairs.TITLE_1) | curses.A_BOLD
+            attributes = curses.color_pair(ColorPair.TITLE_1) | curses.A_BOLD
             window.addstr(line, attributes)
         elif line_type == LineType.TITLE_2:
-            attributes = curses.color_pair(ColorPairs.TITLE_2) | curses.A_BOLD
+            attributes = curses.color_pair(ColorPair.TITLE_2) | curses.A_BOLD
             window.addstr(line, attributes)
         elif line_type == LineType.TITLE_3:
-            window.addstr(line, curses.color_pair(ColorPairs.TITLE_3))
+            window.addstr(line, curses.color_pair(ColorPair.TITLE_3))
         elif line_type == LineType.LINK:
-            window.addstr(line, curses.color_pair(ColorPairs.LINK))
+            window.addstr(line, curses.color_pair(ColorPair.LINK))
         elif line_type == LineType.PREFORMATTED:
-            window.addstr(line, curses.color_pair(ColorPairs.PREFORMATTED))
+            window.addstr(line, curses.color_pair(ColorPair.PREFORMATTED))
         elif line_type == LineType.BLOCKQUOTE:
             attributes = (
-                curses.color_pair(ColorPairs.BLOCKQUOTE)
+                curses.color_pair(ColorPair.BLOCKQUOTE)
                 | curses.A_ITALIC
             )
             window.addstr(line, attributes)
