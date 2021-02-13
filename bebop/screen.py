@@ -23,6 +23,7 @@ class Screen:
         self.command_line = None
         self.status_data = ("", 0)
         self.current_url = ""
+        self.history = []
 
     @property
     def h(self):
@@ -86,6 +87,8 @@ class Screen:
             elif char == ord("l"):
                 if self.page.scroll_right(self.w):
                     self.refresh_page()
+            elif char == ord("H"):
+                self.go_back()
             elif curses.ascii.isdigit(char):
                 self.handle_digit_input(char)
             elif char == curses.KEY_MOUSE:
@@ -189,6 +192,8 @@ class Screen:
 
         if response.code == 20:
             self.load_page(response.content)
+            if self.current_url:
+                self.history.append(self.current_url)
             self.current_url = url
             self.set_status(url)
         elif response.generic_code == 30 and response.meta:
@@ -350,3 +355,8 @@ class Screen:
             self.screen.clear()
             self.screen.refresh()
         self.refresh_windows()
+
+    def go_back(self):
+        """Go back in history if possible."""
+        if self.history:
+            self.open_gemini_url(self.history.pop())
