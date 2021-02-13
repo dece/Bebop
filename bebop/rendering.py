@@ -83,10 +83,9 @@ def format_title(title: Title, context: dict):
         lines = (line_template.format(line) for line in wrapped)
     else:
         if title.level == 2:
-            text = "  " + title.text
+            lines = wrap_words(title.text, context["width"], indent=2)
         else:
-            text = title.text
-        lines = wrap_words(text, context["width"])
+            lines = wrap_words(title.text, context["width"])
     # Title levels match the type constants of titles.
     return [({"type": LineType(title.level)}, line) for line in lines]
 
@@ -99,17 +98,21 @@ def format_paragraph(paragraph: Paragraph, context: dict):
 
 def format_link(link: Link, context: dict):
     """Return metalines for this link."""
+    # Get a new link and build the "[id]" anchor.
     link_id = context["last_link_id"] + 1
     context["last_link_id"] = link_id
     link_text = link.text or link.url
-    text = f"[{link_id}] " + link_text
-    lines = wrap_words(text, context["width"])
+    link_anchor = f"[{link_id}] "
+    # Wrap lines, indented by the link anchor length.
+    lines = wrap_words(link_text, context["width"], indent=len(link_anchor))
     first_line_meta = {
         "type": LineType.LINK,
         "url": link.url,
         "link_id": link_id
     }
-    first_line = [(first_line_meta, lines[0])]
+    # Replace first line indentation with the anchor.
+    first_line_text = link_anchor + lines[0][len(link_anchor):]
+    first_line = [(first_line_meta, first_line_text)]
     other_lines = [({"type": LineType.LINK}, line) for line in lines[1:]]
     return first_line + other_lines
 
@@ -128,10 +131,10 @@ def format_blockquote(blockquote: Blockquote, context: dict):
     return [({"type": LineType.BLOCKQUOTE}, line) for line in lines]
 
 
-def wrap_words(text, width):
+def wrap_words(text, width, indent=0):
     """Wrap a text in several lines according to the renderer's width."""
     lines = []
-    line = ""
+    line = " " * indent
     words = _explode_words(text)
     for word in words:
         line_len, word_len = len(line), len(word)
@@ -140,11 +143,13 @@ def wrap_words(text, width):
             # Push only non-empty lines.
             if line_len > 0:
                 lines.append(line)
-                line = ""
+                line = " " * indent
             # Force split words that are longer than the width.
             while word_len > width:
-                lines.append(word[:width - 1] + JOIN_CHAR)
-                word = word[width - 1:]
+                split_offset = width - 1 - indent
+                word_line = " " * indent + word[:split_offset] + JOIN_CHAR
+                lines.append(word_line)
+                word = word[split_offset:]
                 word_len = len(word)
             word = word.lstrip()
         line += word

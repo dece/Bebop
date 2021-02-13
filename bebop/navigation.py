@@ -25,6 +25,11 @@ def parse_url(url, absolute=False):
     return parts
 
 
+def sanitize_url(url):
+    """Parse and unparse an URL to ensure it has been properly formatted."""
+    return urllib.parse.urlunparse(parse_url(url))
+
+
 def join_url(base_url, url):
     """Join a base URL with a relative url."""
     if base_url.startswith("gemini://"):

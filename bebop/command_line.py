@@ -54,8 +54,12 @@ class EscapeCommandInterrupt(Exception):
 
 
 class TerminateCommandInterrupt(Exception):
-    """Signal that validation ended command line input early. Use `command`."""
+    """Signal that validation ended command line input early.
 
-    def __init__(self, command: str, *args, **kwargs):
+    The value to use is stored in the command attribute. This value can be of
+    any type: str for common commands but also int for ID input, etc.
+    """
+
+    def __init__(self, command, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.command = command

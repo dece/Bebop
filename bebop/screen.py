@@ -7,7 +7,7 @@ from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
     TerminateCommandInterrupt)
 from bebop.mouse import ButtonState
-from bebop.navigation import join_url, parse_url
+from bebop.navigation import join_url, parse_url, sanitize_url
 from bebop.page import Page
 from bebop.protocol import Request, Response
 
@@ -135,36 +135,42 @@ class Screen:
         self.status_data = f"Error: {text}", ColorPair.ERROR
         self.refresh_status_line()
 
-    def open_url(self, url):
+    def open_url(self, url, redirections=0):
         """Try to open an URL.
 
         If the URL is not strictly absolute, it will be opened relatively to the
         current URL, unless there is no current URL yet.
         """
+        if redirections > 5:
+            self.set_status_error(f"too many redirections ({url})")
+            return
         if self.current_url:
             parts = parse_url(url)
         else:
             parts = parse_url(url, absolute=True)
         if parts.scheme == "gemini":
+            # If there is no netloc, this is a relative URL.
             if not parts.netloc:
                 url = join_url(self.current_url, url)
-            self.open_gemini_url(url)
+            self.open_gemini_url(sanitize_url(url), redirections)
         else:
-            self.set_status_error(f"protocol {parts.scheme} not supported.")
+            self.set_status_error(f"protocol {parts.scheme} not supported")
 
-    def open_gemini_url(self, url):
+    def open_gemini_url(self, url, redirections=0):
         """Open a Gemini URL and set the formatted response as content."""
+        with open("/tmp/a", "at") as f: f.write(url + "\n")
         self.set_status(f"Loading {url}")
         req = Request(url, self.stash)
         connected = req.connect()
         if not connected:
             if req.state == Request.STATE_ERROR_CERT:
-                self.set_status_error("certificate was missing or corrupt.")
+                error = f"certificate was missing or corrupt ({url})"
+                self.set_status_error(error)
             elif req.state == Request.STATE_UNTRUSTED_CERT:
-                self.set_status_error("certificate has been changed.")
+                self.set_status_error(f"certificate has been changed ({url})")
                 # TODO propose the user ways to handle this.
             else:
-                self.set_status_error("connection failed.")
+                self.set_status_error(f"connection failed ({url})")
             return
 
         if req.state == Request.STATE_INVALID_CERT:
@@ -178,7 +184,7 @@ class Screen:
 
         response = Response.parse(req.proceed())
         if not response:
-            self.set_status_error("server response parsing failed.")
+            self.set_status_error(f"server response parsing failed ({url})")
             return
 
         if response.code == 20:
@@ -186,7 +192,9 @@ class Screen:
             self.current_url = url
             self.set_status(url)
         elif response.generic_code == 30 and response.meta:
-            self.open_gemini_url(response.meta)
+            self.open_url(response.meta, redirections=redirections + 1)
+        elif response.generic_code in (40, 50):
+            self.set_status_error(response.meta or Response.code.name)
 
     def load_page(self, gemtext: bytes):
         """Load Gemtext data as the current page."""
@@ -233,49 +241,54 @@ class Screen:
         When a digit key is pressed, the user intents to visit a link (or
         dropped something on the numpad). To reduce the number of key types
         needed, Bebop uses the following algorithm:
-        - If the highest link ID on the page is less than 10, pressing the key
-          takes you to the link.
-        - If it's higher than 10, the user either inputs as many digits required
+        - If the current user input identifies a link without ambiguity, it is
+          used directly.
+        - If it is ambiguous, the user either inputs as many digits required
           to disambiguate the link ID, or press enter to validate her input.
 
         Examples:
         - I have 3 links. Pressing "2" takes me to link 2.
-        - I have 15 links. Pressing "3" and Enter takes me to link 2.
-        - I have 15 links. Pressing "1" and "2" takes me to link 12 (no
-          ambiguity, so Enter is not required).
+        - I have 15 links. Pressing "3" takes me to link 3 (no ambiguity).
+        - I have 15 links. Pressing "1" and "2" takes me to link 12.
         - I have 456 links. Pressing "1", "2" and Enter takes me to link 12.
-        - I have 456 links. Pressing "1", "2" and "6" takes me to link 126 (no
-          ambiguity as well).
+        - I have 456 links. Pressing "1", "2" and "6" takes me to link 126.
         """
         digit = init_char & 0xf
         links = self.page.links
         num_links = len(links)
+        # If there are less than 10 links, just open it now.
         if num_links < 10:
             self.open_link(links, digit)
             return
-        required_digits = 0
+        # Else check if the digit alone is sufficient.
+        digit = chr(init_char)
+        max_digits = 0
         while num_links:
-            required_digits += 1
+            max_digits += 1
             num_links //= 10
-        validator = lambda ch: self._validate_link_digit(ch, required_digits)
-        link_input = self.command_line.focus("&", validator, chr(init_char))
+        disambiguous = self.disambiguate_link_id(digit, links, max_digits)
+        if disambiguous is not None:
+            self.open_link(links, disambiguous)
+            return
+        # Else, focus the command line to let the user input more digits.
+        validator = lambda ch: self._validate_link_digit(ch, links, max_digits)
+        link_input = self.command_line.focus("&", validator, digit)
         try:
-            link_id = int(link_input)
+            self.open_link(links, int(link_input))
         except ValueError:
             self.set_status_error("invalid link ID")
-            return
-        self.open_link(links, link_id)
 
-    def _validate_link_digit(self, ch: int, required_digits: int):
+    def _validate_link_digit(self, ch: int, links, max_digits: int):
         """Handle input chars to be used as link ID."""
         # Handle common chars.
         ch = self.validate_common_char(ch)
         # Only accept digits. If we reach the amount of required digits, open
         # link now and leave command line. Else just process it.
         if curses.ascii.isdigit(ch):
-            digits = self.command_line.gather()
-            if len(digits) + 1 == required_digits:
-                raise TerminateCommandInterrupt(digits + chr(ch))
+            digits = self.command_line.gather() + chr(ch)
+            disambiguous = self.disambiguate_link_id(digits, links, max_digits)
+            if disambiguous is not None:
+                raise TerminateCommandInterrupt(disambiguous)
             return ch
         # If not a digit but a printable character, ignore it.
         if curses.ascii.isprint(ch):
@@ -283,9 +296,15 @@ class Screen:
         # Everything else could be a control character and should be processed.
         return ch
 
-    def disambiguate_link_id(self, digits: str, max_digits: int):
+    def disambiguate_link_id(self, digits: str, links, max_digits: int):
+        """Return the only possible link ID as str, or None on ambiguities."""
         if len(digits) == max_digits:
-            return digits
+            return int(digits)
+        candidates = [
+            link_id for link_id, url in links.items()
+            if str(link_id).startswith(digits)
+        ]
+        return candidates[0] if len(candidates) == 1 else None
 
     def open_link(self, links, link_id: int):
         """Open the link with this link ID."""
@@ -300,9 +319,11 @@ class Screen:
         Right now, only vertical scrolling is handled.
         """
         if bstate & ButtonState.SCROLL_UP:
-            self.page.scroll_v(-3)
+            if self.page.scroll_v(-3):
+                self.refresh_page()
         elif bstate & ButtonState.SCROLL_DOWN:
-            self.page.scroll_v(3, self.h - 2)
+            if self.page.scroll_v(3, self.h - 2):
+                self.refresh_page()
 
     def handle_resize(self):
         """Try to not make everything collapse on resizes."""
