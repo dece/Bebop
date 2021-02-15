@@ -135,7 +135,7 @@ class Screen:
 
     def set_status_error(self, text):
         """Set an error message in the status bar."""
-        self.status_data = f"Error: {text}", ColorPair.ERROR
+        self.status_data = text, ColorPair.ERROR
         self.refresh_status_line()
 
     def open_url(self, url, redirections=0):
@@ -145,7 +145,7 @@ class Screen:
         current URL, unless there is no current URL yet.
         """
         if redirections > 5:
-            self.set_status_error(f"too many redirections ({url})")
+            self.set_status_error(f"Too many redirections ({url}).")
             return
         if self.current_url:
             parts = parse_url(url)
@@ -157,7 +157,7 @@ class Screen:
                 url = join_url(self.current_url, url)
             self.open_gemini_url(sanitize_url(url), redirections)
         else:
-            self.set_status_error(f"protocol {parts.scheme} not supported")
+            self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
     def open_gemini_url(self, url, redirections=0, history=True):
         """Open a Gemini URL and set the formatted response as content."""
@@ -166,13 +166,16 @@ class Screen:
         connected = req.connect()
         if not connected:
             if req.state == Request.STATE_ERROR_CERT:
-                error = f"certificate was missing or corrupt ({url})"
+                error = f"Certificate was missing or corrupt ({url})."
                 self.set_status_error(error)
             elif req.state == Request.STATE_UNTRUSTED_CERT:
-                self.set_status_error(f"certificate has been changed ({url})")
+                self.set_status_error(f"Certificate has been changed ({url}).")
                 # TODO propose the user ways to handle this.
+            elif req.state == Request.STATE_CONNECTION_FAILED:
+                error = f": {req.error}" if req.error else ""
+                self.set_status_error(f"Connection failed ({url}){error}.")
             else:
-                self.set_status_error(f"connection failed ({url})")
+                self.set_status_error(f"Connection failed ({url}).")
             return
 
         if req.state == Request.STATE_INVALID_CERT:
@@ -186,7 +189,7 @@ class Screen:
 
         response = Response.parse(req.proceed())
         if not response:
-            self.set_status_error(f"server response parsing failed ({url})")
+            self.set_status_error(f"Server response parsing failed ({url}).")
             return
 
         if response.code == 20:
@@ -198,7 +201,8 @@ class Screen:
         elif response.generic_code == 30 and response.meta:
             self.open_url(response.meta, redirections=redirections + 1)
         elif response.generic_code in (40, 50):
-            self.set_status_error(response.meta or Response.code.name)
+            error = f"Server error: {response.meta or Response.code.name}."
+            self.set_status_error(error)
 
     def load_page(self, gemtext: bytes):
         """Load Gemtext data as the current page."""
@@ -280,7 +284,7 @@ class Screen:
         try:
             self.open_link(links, int(link_input))
         except ValueError:
-            self.set_status_error("invalid link ID")
+            self.set_status_error("Invalid link ID.")
 
     def _validate_link_digit(self, ch: int, links, max_digits: int):
         """Handle input chars to be used as link ID."""
@@ -313,7 +317,7 @@ class Screen:
     def open_link(self, links, link_id: int):
         """Open the link with this link ID."""
         if not link_id in links:
-            self.set_status_error(f"unknown link ID {link_id}.")
+            self.set_status_error(f"Unknown link ID {link_id}.")
             return
         self.open_url(links[link_id])
 

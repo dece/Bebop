@@ -34,6 +34,8 @@ class Request:
     STATE_UNTRUSTED_CERT = 5
     # Valid and trusted cert: proceed.
     STATE_OK = 6
+    # Connection failed.
+    STATE_CONNECTION_FAILED = 7
 
     def __init__(self, url, cert_stash):
         self.url = url
@@ -43,6 +45,7 @@ class Request:
         self.ssock = None
         self.cert = None
         self.cert_status = None
+        self.error = ""
 
     def connect(self):
         """Connect to a Gemini server and return a RequestEventType.
@@ -73,9 +76,21 @@ class Request:
             return False
         self.payload += LINE_TERM
 
+        try:
+            sock = socket.create_connection((hostname, port))
+        except socket.gaierror as exc:
+            self.state = Request.STATE_CONNECTION_FAILED
+            self.error = exc.strerror
+            return False
+
         context = Request.get_ssl_context()
-        sock = socket.create_connection((hostname, port))
-        self.ssock = context.wrap_socket(sock)
+        try:
+            self.ssock = context.wrap_socket(sock)
+        except OSError as exc:
+            self.state = Request.STATE_CONNECTION_FAILED
+            self.error = exc.strerror
+            return False
+
         der = self.ssock.getpeercert(binary_form=True)
         self.cert_status, self.cert = \
             validate_cert(der, hostname, self.cert_stash)
