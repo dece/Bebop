@@ -159,9 +159,8 @@ class Screen:
         else:
             self.set_status_error(f"protocol {parts.scheme} not supported")
 
-    def open_gemini_url(self, url, redirections=0):
+    def open_gemini_url(self, url, redirections=0, history=True):
         """Open a Gemini URL and set the formatted response as content."""
-        with open("/tmp/a", "at") as f: f.write(url + "\n")
         self.set_status(f"Loading {url}")
         req = Request(url, self.stash)
         connected = req.connect()
@@ -192,7 +191,7 @@ class Screen:
 
         if response.code == 20:
             self.load_page(response.content)
-            if self.current_url:
+            if self.current_url and history:
                 self.history.append(self.current_url)
             self.current_url = url
             self.set_status(url)
@@ -365,4 +364,4 @@ class Screen:
     def go_back(self):
         """Go back in history if possible."""
         if self.history:
-            self.open_gemini_url(self.history.pop())
+            self.open_gemini_url(self.history.pop(), history=False)
