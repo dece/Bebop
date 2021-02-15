@@ -60,6 +60,11 @@ class Request:
             self.state = Request.STATE_INVALID_URL
             return False
         hostname = url_parts["host"]
+        if ":" in hostname:
+            hostname, port = hostname.split(":", maxsplit=1)
+            port = int(port)
+        else:
+            port = 1965
 
         try:
             self.payload = self.url.encode()
@@ -69,7 +74,7 @@ class Request:
         self.payload += LINE_TERM
 
         context = Request.get_ssl_context()
-        sock = socket.create_connection((hostname, 1965))
+        sock = socket.create_connection((hostname, port))
         self.ssock = context.wrap_socket(sock)
         der = self.ssock.getpeercert(binary_form=True)
         self.cert_status, self.cert = \
