@@ -57,7 +57,7 @@ def parse_gemtext(data):
             elements.append(Link(url, text))
             continue
 
-        if line == Preformatted.FENCE:
+        if line.startswith(Preformatted.FENCE):
             if preformatted:
                 elements.append(preformatted)
                 preformatted = None
