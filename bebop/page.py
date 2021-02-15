@@ -40,7 +40,7 @@ class Page:
         content_position = self.current_line, self.current_column
         self.pad.refresh(*content_position, 0, 0, x, y)
 
-    def scroll_v(self, num_lines: int, window_height: int =None):
+    def scroll_v(self, num_lines: int, window_height: int =0):
         """Make the content pad scroll up and down by num_lines.
 
         Arguments:
@@ -63,14 +63,18 @@ class Page:
                 return True
         return False
 
-    def scroll_left(self):
-        if self.current_column > 0:
-            self.current_column -= 1
-            return True
-        return False
-
-    def scroll_right(self, window_width):
-        if self.current_column < Page.MAX_COLS - window_width:
-            self.current_column += 1
-            return True
+    def scroll_h(self, num_columns: int, window_width: int =0):
+        if num_columns < 0:
+            num_columns = -num_columns
+            min_column = 0
+            if self.current_column > min_column:
+                new_column = self.current_column - num_columns
+                self.current_column = max(new_column, min_column)
+                return True
+        else:
+            max_column = self.dim[1] - window_width
+            if self.current_column < max_column:
+                new_column = self.current_column + num_columns
+                self.current_column = min(new_column, max_column)
+                return True
         return False

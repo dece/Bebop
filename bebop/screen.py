@@ -76,17 +76,17 @@ class Screen:
             elif char == ord("s"):
                 self.set_status(f"h {self.h} w {self.w}")
             elif char == ord("h"):
-                if self.page.scroll_left():
-                    self.refresh_page()
+                self.scroll_page_horizontally(-1)
             elif char == ord("j"):
-                if self.page.scroll_v(1, self.h - 2):
-                    self.refresh_page()
+                self.scroll_page_vertically(1)
             elif char == ord("k"):
-                if self.page.scroll_v(-1, self.h - 2):
-                    self.refresh_page()
+                self.scroll_page_vertically(-1)
             elif char == ord("l"):
-                if self.page.scroll_right(self.w):
-                    self.refresh_page()
+                self.scroll_page_horizontally(1)
+            elif char == ord("f"):
+                self.scroll_page_vertically(self.page_pad_size[0])
+            elif char == ord("b"):
+                self.scroll_page_vertically(-self.page_pad_size[0])
             elif char == ord("H"):
                 self.go_back()
             elif curses.ascii.isdigit(char):
@@ -324,11 +324,9 @@ class Screen:
         Right now, only vertical scrolling is handled.
         """
         if bstate & ButtonState.SCROLL_UP:
-            if self.page.scroll_v(-3):
-                self.refresh_page()
+            self.scroll_page_vertically(-3)
         elif bstate & ButtonState.SCROLL_DOWN:
-            if self.page.scroll_v(3, self.h - 2):
-                self.refresh_page()
+            self.scroll_page_vertically(3)
 
     def handle_resize(self):
         """Try to not make everything collapse on resizes."""
@@ -355,6 +353,14 @@ class Screen:
             self.screen.clear()
             self.screen.refresh()
         self.refresh_windows()
+
+    def scroll_page_vertically(self, by_lines: int):
+        if self.page.scroll_v(by_lines, self.h - 2):
+            self.refresh_page()
+
+    def scroll_page_horizontally(self, by_columns: int):
+        if self.page.scroll_h(by_columns, self.w):
+            self.refresh_page()
 
     def go_back(self):
         """Go back in history if possible."""
