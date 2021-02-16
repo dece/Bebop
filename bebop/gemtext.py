@@ -34,6 +34,12 @@ class Blockquote:
     RE = re.compile(r">\s*(.*)")
 
 
+@dataclass
+class ListItem:
+    text: str
+    RE = re.compile(r"\*\s(.*)")
+
+
 def parse_gemtext(data):
     """Parse UTF-8 encoded Gemtext as a list of elements."""
     text = data.decode(encoding="utf8", errors="ignore")
@@ -69,6 +75,12 @@ def parse_gemtext(data):
         if match:
             text = match.groups()[0]
             elements.append(Blockquote(text))
+            continue
+
+        match = ListItem.RE.match(line)
+        if match:
+            text = match.groups()[0]
+            elements.append(ListItem(text))
             continue
 
         if preformatted:

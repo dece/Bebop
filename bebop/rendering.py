@@ -3,11 +3,13 @@ import string
 from enum import IntEnum
 
 from bebop.colors import ColorPair
-from bebop.gemtext import Blockquote, Link, Paragraph, Preformatted, Title
+from bebop.gemtext import (Blockquote, Link, ListItem, Paragraph, Preformatted,
+    Title)
 
 
 SPLIT_CHARS = " \t-"
 JOIN_CHAR = "-"
+LIST_ITEM_MARK = "• "
 
 
 class LineType(IntEnum):
@@ -24,6 +26,7 @@ class LineType(IntEnum):
     LINK = 5
     PREFORMATTED = 6
     BLOCKQUOTE = 7
+    LIST_ITEM = 8
 
 
 def format_elements(elements, width):
@@ -60,6 +63,8 @@ def format_elements(elements, width):
         elif isinstance(element, Blockquote):
             element_metalines = format_blockquote(element, context)
             has_margins = True
+        elif isinstance(element, ListItem):
+            element_metalines = format_list_item(element, context)
         else:
             continue
         # If current element requires margins and is not the first elements,
@@ -129,6 +134,15 @@ def format_blockquote(blockquote: Blockquote, context: dict):
     """Return metalines for this blockquote."""
     lines = wrap_words(blockquote.text, context["width"])
     return [({"type": LineType.BLOCKQUOTE}, line) for line in lines]
+
+
+def format_list_item(item: ListItem, context: dict):
+    """Return metalines for this list item."""
+    indent = len(LIST_ITEM_MARK)
+    lines = wrap_words(item.text, context["width"], indent=indent)
+    first_line = LIST_ITEM_MARK + lines[0][indent:]
+    lines[0] = first_line
+    return [({"type": LineType.LIST_ITEM}, line) for line in lines]
 
 
 def wrap_words(text, width, indent=0):
