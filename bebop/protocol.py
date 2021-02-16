@@ -85,7 +85,7 @@ class Request:
 
         context = Request.get_ssl_context()
         try:
-            self.ssock = context.wrap_socket(sock)
+            self.ssock = context.wrap_socket(sock, server_hostname=hostname)
         except OSError as exc:
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror
