@@ -1,7 +1,7 @@
 import argparse
 
+from bebop.browser import Browser
 from bebop.tofu import load_cert_stash
-from bebop.screen import Screen
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
         start_url = None
 
     cert_stash = load_cert_stash("/tmp/stash")
-    Screen(cert_stash).run(start_url=start_url)
+    Browser(cert_stash).run(start_url=start_url)
 
 
 main()

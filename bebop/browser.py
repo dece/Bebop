@@ -12,7 +12,8 @@ from bebop.page import Page
 from bebop.protocol import Request, Response
 
 
-class Screen:
+class Browser:
+    """Manage the events, inputs and rendering."""
     
     def __init__(self, cert_stash):
         self.stash = cert_stash
@@ -64,15 +65,14 @@ class Screen:
         running = True
         while running:
             if pending_url:
-                self.open_gemini_url(pending_url)
+                self.open_url(pending_url)
                 pending_url = None
 
             char = self.screen.getch()
             if char == ord("q"):
                 running = False
             elif char == ord(":"):
-                command = self.take_user_input()
-                self.set_status(f"Command: {command}")
+                self.quick_command("")
             elif char == ord("s"):
                 self.set_status(f"h {self.h} w {self.w}")
             elif char == ord("h"):
@@ -87,6 +87,8 @@ class Screen:
                 self.scroll_page_vertically(self.page_pad_size[0])
             elif char == ord("b"):
                 self.scroll_page_vertically(-self.page_pad_size[0])
+            elif char == ord("o"):
+                self.quick_command("open")
             elif char == ord("H"):
                 self.go_back()
             elif curses.ascii.isdigit(char):
@@ -113,11 +115,13 @@ class Screen:
         return 1, self.w
 
     def refresh_windows(self):
+        """Refresh all windows and clear command line."""
         self.refresh_page()
         self.refresh_status_line()
         self.command_line.clear()
 
     def refresh_page(self):
+        """Refresh the current page pad; it does not reload the page."""
         self.page.refresh_content(*self.page_pad_size)
 
     def refresh_status_line(self):
@@ -138,19 +142,28 @@ class Screen:
         self.status_data = text, ColorPair.ERROR
         self.refresh_status_line()
 
-    def open_url(self, url, redirections=0):
+    def open_url(self, url, redirections=0, assume_absolute=False):
         """Try to open an URL.
 
-        If the URL is not strictly absolute, it will be opened relatively to the
-        current URL, unless there is no current URL yet.
+        This function assumes that the URL can be from an user and thus tries a
+        few things to make it work.
+
+        If there is no current URL (e.g. we just started) or `assume_absolute`
+        is True, assume it is an absolute URL. In other cases, parse it normally
+        and later check if it has to be used relatively to the current URL.
+        
+        Arguments:
+        - url: an URL string, may not be completely compliant.
+        - redirections: number of redirections we did yet for the same request.
+        - assume_absolute: assume we intended to use an absolute URL if True.
         """
         if redirections > 5:
             self.set_status_error(f"Too many redirections ({url}).")
             return
-        if self.current_url:
-            parts = parse_url(url)
-        else:
+        if assume_absolute or not self.current_url:
             parts = parse_url(url, absolute=True)
+        else:
+            parts = parse_url(url)
         if parts.scheme == "gemini":
             # If there is no netloc, this is a relative URL.
             if not parts.netloc:
@@ -217,9 +230,13 @@ class Screen:
         else:
             self.refresh_page()
 
-    def take_user_input(self, type_char: str =":"):
-        """Focus command line to let the user type something"""
-        return self.command_line.focus(type_char, self.validate_common_char)
+    def take_user_input(self, type_char: str =":", prefix: str =""):
+        """Focus command line to let the user type something."""
+        return self.command_line.focus(
+            type_char,
+            validator=self.validate_common_char,
+            prefix=prefix,
+        )
 
     def validate_common_char(self, ch: int):
         """Generic input validator, handles a few more cases than default.
@@ -244,6 +261,20 @@ class Screen:
                 raise EscapeCommandInterrupt()
             self.screen.nodelay(False)
         return ch
+
+    def quick_command(self, command):
+        """Shortcut method to take user input with a prefixed command string."""
+        prefix = f"{command} " if command else ""
+        user_input = self.take_user_input(prefix=prefix)
+        if not user_input:
+            return
+        self.process_command(user_input)
+
+    def process_command(self, command_text: str):
+        words = command_text.split()
+        command = words[0]
+        if command == "open":
+            self.open_url(words[1], assume_absolute=True)
 
     def handle_digit_input(self, init_char: int):
         """Handle a initial digit input by the user.
