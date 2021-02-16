@@ -7,7 +7,7 @@ from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
     TerminateCommandInterrupt)
 from bebop.mouse import ButtonState
-from bebop.navigation import join_url, parse_url, sanitize_url
+from bebop.navigation import join_url, parse_url, sanitize_url, set_parameter
 from bebop.page import Page
 from bebop.protocol import Request, Response
 
@@ -71,7 +71,7 @@ class Screen:
             if char == ord("q"):
                 running = False
             elif char == ord(":"):
-                command = self.input_common_command()
+                command = self.take_user_input()
                 self.set_status(f"Command: {command}")
             elif char == ord("s"):
                 self.set_status(f"h {self.h} w {self.w}")
@@ -203,6 +203,8 @@ class Screen:
         elif response.generic_code in (40, 50):
             error = f"Server error: {response.meta or Response.code.name}."
             self.set_status_error(error)
+        elif response.generic_code == 10:
+            self.handle_input_request(url, response)
 
     def load_page(self, gemtext: bytes):
         """Load Gemtext data as the current page."""
@@ -215,9 +217,9 @@ class Screen:
         else:
             self.refresh_page()
 
-    def input_common_command(self):
-        """Focus command line to type a regular command. Currently useless."""
-        return self.command_line.focus(":", self.validate_common_char)
+    def take_user_input(self, type_char: str =":"):
+        """Focus command line to let the user type something"""
+        return self.command_line.focus(type_char, self.validate_common_char)
 
     def validate_common_char(self, ch: int):
         """Generic input validator, handles a few more cases than default.
@@ -320,6 +322,16 @@ class Screen:
             self.set_status_error(f"Unknown link ID {link_id}.")
             return
         self.open_url(links[link_id])
+
+    def handle_input_request(self, from_url: str, response: Response):
+        if response.meta:
+            self.set_status(f"Input needed: {response.meta}")
+        else:
+            self.set_status("Input needed:")
+        user_input = self.take_user_input("?")
+        if user_input:
+            url = set_parameter(from_url, user_input)
+            self.open_gemini_url(url)
 
     def handle_mouse(self, mouse_id: int, x: int, y: int, z: int, bstate: int):
         """Handle mouse events.

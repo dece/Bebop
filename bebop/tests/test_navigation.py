@@ -1,6 +1,6 @@
 import unittest
 
-from ..navigation import join_url, parse_url
+from ..navigation import join_url, parse_url, set_parameter
 
 
 class TestNavigation(unittest.TestCase):
@@ -28,3 +28,9 @@ class TestNavigation(unittest.TestCase):
         self.assertEqual(url, "gemini://dece.space/dir1/other-file.gmi")
         url = join_url("gemini://dece.space/dir1/file.gmi", "../top-level.gmi")
         self.assertEqual(url, "gemini://dece.space/top-level.gmi")
+
+    def test_set_parameter(self):
+        url = set_parameter("gemini://gus.guru/search", "my search")
+        self.assertEqual(url, "gemini://gus.guru/search?my%20search")
+        url = set_parameter("gemini://gus.guru/search?old%20search", "new")
+        self.assertEqual(url, "gemini://gus.guru/search?new")

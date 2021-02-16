@@ -1,7 +1,7 @@
 import urllib.parse
 
 
-def parse_url(url, absolute=False):
+def parse_url(url: str, absolute: bool =False):
     """Return URL parts from this URL.
 
     This uses urllib.parse.urlparse to not reinvent the wheel, with a few
@@ -25,14 +25,22 @@ def parse_url(url, absolute=False):
     return parts
 
 
-def sanitize_url(url):
+def sanitize_url(url: str):
     """Parse and unparse an URL to ensure it has been properly formatted."""
     return urllib.parse.urlunparse(parse_url(url))
 
 
-def join_url(base_url, url):
+def join_url(base_url: str, url: str):
     """Join a base URL with a relative url."""
     if base_url.startswith("gemini://"):
         base_url = base_url[7:]
     parts = parse_url(urllib.parse.urljoin(base_url, url))
     return urllib.parse.urlunparse(parts)
+
+
+def set_parameter(url: str, user_input: str):
+    """Return a new URL with the user input escaped (RFC 3986) appended."""
+    quoted_input = urllib.parse.quote(user_input)
+    if "?" in url:
+        url = url.rsplit("?", maxsplit=1)[0]
+    return url + "?" + quoted_input
