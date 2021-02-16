@@ -33,7 +33,7 @@ class CommandLine:
         self.window.addstr(command_char + prefix)
         curses.curs_set(1)
         try:
-            command = self.textbox.edit(validator)[1:]
+            command = self.textbox.edit(validator)[1:].strip()
         except EscapeCommandInterrupt:
             command = ""
         except TerminateCommandInterrupt as exc:

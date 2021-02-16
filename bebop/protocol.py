@@ -78,7 +78,7 @@ class Request:
 
         try:
             sock = socket.create_connection((hostname, port))
-        except socket.gaierror as exc:
+        except OSError as exc:
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror
             return False

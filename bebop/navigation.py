@@ -20,7 +20,7 @@ def parse_url(url: str, absolute: bool =False):
     if url.startswith("gemini://"):
         url = url[7:]
     parts = urllib.parse.urlparse(url, scheme="gemini")
-    if not parts.netloc and absolute:
+    if not parts.netloc or absolute:
         parts = urllib.parse.urlparse(f"//{url}", scheme="gemini")
     return parts
 
