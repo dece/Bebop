@@ -162,11 +162,13 @@ class Browser:
             return
         if assume_absolute or not self.current_url:
             parts = parse_url(url, absolute=True)
+            join = False
         else:
             parts = parse_url(url)
+            join = True
         if parts.scheme == "gemini":
             # If there is no netloc, this is a relative URL.
-            if not parts.netloc:
+            if join:
                 url = join_url(self.current_url, url)
             self.open_gemini_url(sanitize_url(url), redirections)
         else:
@@ -315,9 +317,11 @@ class Browser:
         validator = lambda ch: self._validate_link_digit(ch, links, max_digits)
         link_input = self.command_line.focus("&", validator, digit)
         try:
-            self.open_link(links, int(link_input))
-        except ValueError:
-            self.set_status_error("Invalid link ID.")
+            link_id = int(link_input)
+        except ValueError as exc:
+            self.set_status_error(f"Invalid link ID {link_input}.")
+            return
+        self.open_link(links, link_id)
 
     def _validate_link_digit(self, ch: int, links, max_digits: int):
         """Handle input chars to be used as link ID."""
