@@ -190,8 +190,8 @@ class Browser:
                 self.set_status_error(f"Certificate has been changed ({url}).")
                 # TODO propose the user ways to handle this.
             elif req.state == Request.STATE_CONNECTION_FAILED:
-                error = f": {req.error}" if req.error else ""
-                self.set_status_error(f"Connection failed ({url}){error}.")
+                error = f": {req.error}" if req.error else "."
+                self.set_status_error(f"Connection failed ({url}){error}")
             else:
                 self.set_status_error(f"Connection failed ({url}).")
             return
@@ -213,13 +213,13 @@ class Browser:
         if response.code == 20:
             self.load_page(response.content)
             if self.current_url and history:
-                self.history.append(self.current_url)
+                self.history.push(self.current_url)
             self.current_url = url
             self.set_status(url)
         elif response.generic_code == 30 and response.meta:
             self.open_url(response.meta, redirections=redirections + 1)
         elif response.generic_code in (40, 50):
-            error = f"Server error: {response.meta or Response.code.name}."
+            error = f"Server error: {response.meta or Response.code.name}"
             self.set_status_error(error)
         elif response.generic_code == 10:
             self.handle_input_request(url, response)
@@ -319,6 +319,8 @@ class Browser:
         # Else, focus the command line to let the user input more digits.
         validator = lambda ch: self._validate_link_digit(ch, links, max_digits)
         link_input = self.command_line.focus("&", validator, digit)
+        if not link_input:
+            return
         try:
             link_id = int(link_input)
         except ValueError as exc:
