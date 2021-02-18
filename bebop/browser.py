@@ -74,6 +74,8 @@ class Browser:
                 running = False
             elif char == ord(":"):
                 self.quick_command("")
+            elif char == ord("r"):
+                self.reload_page()
             elif char == ord("s"):
                 self.set_status(f"h {self.h} w {self.w}")
             elif char == ord("h"):
@@ -412,6 +414,10 @@ class Browser:
     def scroll_page_horizontally(self, by_columns: int):
         if self.page.scroll_h(by_columns, self.w):
             self.refresh_page()
+
+    def reload_page(self):
+        if self.current_url:
+            self.open_gemini_url(self.current_url, history=False)
 
     def go_back(self):
         """Go back in history if possible."""
