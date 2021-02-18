@@ -78,3 +78,16 @@ class Page:
                 self.current_column = min(new_column, max_column)
                 return True
         return False
+
+    def go_to_beginning(self):
+        if self.current_line:
+            self.current_line = 0
+            return True
+        return False
+
+    def go_to_end(self, window_height):
+        max_line = self.dim[0] - window_height
+        if self.current_line != max_line:
+            self.current_line = max_line
+            return True
+        return False

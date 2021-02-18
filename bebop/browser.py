@@ -2,6 +2,7 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
+from math import inf
 
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
@@ -94,6 +95,12 @@ class Browser:
                 self.quick_command("open")
             elif char == ord("H"):
                 self.go_back()
+            elif char == ord("g"):
+                char = self.screen.getch()
+                if char == ord("g"):
+                    self.scroll_page_vertically(-inf)
+            elif char == ord("G"):
+                self.scroll_page_vertically(inf)
             elif curses.ascii.isdigit(char):
                 self.handle_digit_input(char)
             elif char == curses.KEY_MOUSE:
@@ -409,11 +416,19 @@ class Browser:
             self.screen.refresh()
         self.refresh_windows()
 
-    def scroll_page_vertically(self, by_lines: int):
-        if self.page.scroll_v(by_lines, self.h - 2):
+    def scroll_page_vertically(self, by_lines):
+        window_height = self.h - 2
+        require_refresh = False
+        if by_lines == inf:
+            require_refresh = self.page.go_to_end(window_height)
+        elif by_lines == -inf:
+            require_refresh = self.page.go_to_beginning()
+        else:
+            require_refresh = self.page.scroll_v(by_lines, window_height)
+        if require_refresh:
             self.refresh_page()
 
-    def scroll_page_horizontally(self, by_columns: int):
+    def scroll_page_horizontally(self, by_columns):
         if self.page.scroll_h(by_columns, self.w):
             self.refresh_page()
 
