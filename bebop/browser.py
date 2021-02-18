@@ -6,6 +6,7 @@ import os
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
     TerminateCommandInterrupt)
+from bebop.history import History
 from bebop.mouse import ButtonState
 from bebop.navigation import join_url, parse_url, sanitize_url, set_parameter
 from bebop.page import Page
@@ -24,7 +25,7 @@ class Browser:
         self.command_line = None
         self.status_data = ("", 0)
         self.current_url = ""
-        self.history = []
+        self.history = History()
 
     @property
     def h(self):
@@ -414,5 +415,5 @@ class Browser:
 
     def go_back(self):
         """Go back in history if possible."""
-        if self.history:
+        if self.history.has_links():
             self.open_gemini_url(self.history.pop(), history=False)
