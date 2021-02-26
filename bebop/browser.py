@@ -81,12 +81,20 @@ class Browser:
                 self.set_status(f"h {self.h} w {self.w}")
             elif char == ord("h"):
                 self.scroll_page_horizontally(-1)
+            elif char == ord("H"):
+                self.scroll_page_horizontally(-3)
             elif char == ord("j"):
                 self.scroll_page_vertically(1)
+            elif char == ord("J"):
+                self.scroll_page_vertically(3)
             elif char == ord("k"):
                 self.scroll_page_vertically(-1)
+            elif char == ord("K"):
+                self.scroll_page_vertically(-3)
             elif char == ord("l"):
                 self.scroll_page_horizontally(1)
+            elif char == ord("L"):
+                self.scroll_page_horizontally(3)
             elif char == ord("f"):
                 self.scroll_page_vertically(self.page_pad_size[0])
             elif char == ord("b"):
