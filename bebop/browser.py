@@ -102,7 +102,7 @@ class Browser:
                 self.scroll_page_vertically(-self.page_pad_size[0])
             elif char == ord("o"):
                 self.quick_command("open")
-            elif char == ord("H"):
+            elif char == ord("p"):
                 self.go_back()
             elif char == ord("g"):
                 char = self.screen.getch()
