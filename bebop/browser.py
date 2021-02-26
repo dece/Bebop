@@ -3,6 +3,7 @@ import curses.ascii
 import curses.textpad
 import os
 from math import inf
+from webbrowser import open_new_tab
 
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
@@ -189,6 +190,8 @@ class Browser:
             if join:
                 url = join_url(self.current_url, url)
             self.open_gemini_url(sanitize_url(url), redirections)
+        elif parts.scheme.startswith("http"):
+            self.open_web_url(url)
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
@@ -448,3 +451,8 @@ class Browser:
         """Go back in history if possible."""
         if self.history.has_links():
             self.open_gemini_url(self.history.pop(), history=False)
+
+    def open_web_url(self, url):
+        """Open a Web URL. Currently relies in Python's webbrowser module."""
+        self.set_status(f"Opening {url}")
+        open_new_tab(url)
