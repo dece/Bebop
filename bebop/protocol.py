@@ -65,7 +65,11 @@ class Request:
         hostname = url_parts["host"]
         if ":" in hostname:
             hostname, port = hostname.split(":", maxsplit=1)
-            port = int(port)
+            try:
+                port = int(port)
+            except ValueError:
+                self.state = Request.STATE_INVALID_URL
+                return False
         else:
             port = 1965
 
