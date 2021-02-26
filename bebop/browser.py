@@ -161,7 +161,7 @@ class Browser:
         self.status_data = text, ColorPair.ERROR
         self.refresh_status_line()
 
-    def open_url(self, url, redirections=0, assume_absolute=False):
+    def open_url(self, url, base_url=None, redirects=0, assume_absolute=False):
         """Try to open an URL.
 
         This function assumes that the URL can be from an user and thus tries a
@@ -173,10 +173,11 @@ class Browser:
         
         Arguments:
         - url: an URL string, may not be completely compliant.
+        - base_url: an URL string to use as base in case `url` is relative.
         - redirections: number of redirections we did yet for the same request.
         - assume_absolute: assume we intended to use an absolute URL if True.
         """
-        if redirections > 5:
+        if redirects > 5:
             self.set_status_error(f"Too many redirections ({url}).")
             return
         if assume_absolute or not self.current_url:
@@ -187,15 +188,15 @@ class Browser:
             join = True
         if parts.scheme == "gemini":
             # If there is no netloc, this is a relative URL.
-            if join:
-                url = join_url(self.current_url, url)
-            self.open_gemini_url(sanitize_url(url), redirections)
+            if join or base_url:
+                url = join_url(base_url or self.current_url, url)
+            self.open_gemini_url(sanitize_url(url), redirects)
         elif parts.scheme.startswith("http"):
             self.open_web_url(url)
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
-    def open_gemini_url(self, url, redirections=0, history=True):
+    def open_gemini_url(self, url, redirects=0, history=True):
         """Open a Gemini URL and set the formatted response as content."""
         self.set_status(f"Loading {url}")
         req = Request(url, self.stash)
@@ -235,7 +236,7 @@ class Browser:
             self.current_url = url
             self.set_status(url)
         elif response.generic_code == 30 and response.meta:
-            self.open_url(response.meta, redirections=redirections + 1)
+            self.open_url(response.meta, base_url=url, redirects=redirects + 1)
         elif response.generic_code in (40, 50):
             error = f"Server error: {response.meta or Response.code.name}"
             self.set_status_error(error)
