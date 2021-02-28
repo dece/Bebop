@@ -27,6 +27,7 @@ class Browser:
         self.command_line = None
         self.status_data = ("", 0)
         self.current_url = ""
+        self.running = True
         self.history = History()
 
     @property
@@ -65,16 +66,13 @@ class Browser:
         self.command_line = CommandLine(command_line_window)
 
         pending_url = start_url
-        running = True
-        while running:
+        while self.running:
             if pending_url:
                 self.open_url(pending_url)
                 pending_url = None
 
             char = self.screen.getch()
-            if char == ord("q"):
-                running = False
-            elif char == ord(":"):
+            if char == ord(":"):
                 self.quick_command("")
             elif char == ord("r"):
                 self.reload_page()
@@ -297,8 +295,10 @@ class Browser:
     def process_command(self, command_text: str):
         words = command_text.split()
         command = words[0]
-        if command == "open":
+        if command in ("o", "open"):
             self.open_url(words[1], assume_absolute=True)
+        elif command in ("q", "quit"):
+            self.running = False
 
     def handle_digit_input(self, init_char: int):
         """Handle a initial digit input by the user.
