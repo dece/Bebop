@@ -222,7 +222,11 @@ class Browser:
         else:
             pass # TODO
 
-        response = Response.parse(req.proceed())
+        data = req.proceed()
+        if not data:
+            self.set_status_error(f"Server did not respond in time ({url}).")
+            return
+        response = Response.parse(data)
         if not response:
             self.set_status_error(f"Server response parsing failed ({url}).")
             return

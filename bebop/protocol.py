@@ -81,7 +81,7 @@ class Request:
         self.payload += LINE_TERM
 
         try:
-            sock = socket.create_connection((hostname, port))
+            sock = socket.create_connection((hostname, port), timeout=10)
         except OSError as exc:
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror
@@ -124,7 +124,10 @@ class Request:
         self.ssock.sendall(self.payload)
         response = b""
         while True:
-            buf = self.ssock.recv(4096)
+            try:
+                buf = self.ssock.recv(4096)
+            except socket.timeout:
+                buf = None
             if not buf:
                 return response
             response += buf
