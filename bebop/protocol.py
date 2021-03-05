@@ -175,6 +175,7 @@ class Response:
     content: bytes = b""
 
     HEADER_RE = re.compile(r"(\d{2}) (.*)")
+    MAX_META_LEN = 1024
 
     @property
     def generic_code(self):
@@ -192,6 +193,8 @@ class Response:
         if not match:
             return None
         code, meta = match.groups()
+        if len(meta) > Response.MAX_META_LEN:
+            return None
         response = Response(StatusCode(int(code)), meta=meta)
         if response.generic_code == StatusCode.SUCCESS:
             content_offset = response_header_len + len(LINE_TERM)
