@@ -215,10 +215,13 @@ def render_lines(metalines, window, max_width):
     - max_width: line length limit for the pad.
 
     Return:
-    The tuple (height, width) of the resized window.
+    The tuple of integers (error, height, width), error being a non-zero value
+    if an error occured during rendering, and height and width being the new
+    dimensions of the resized window.
     """
     num_lines = len(metalines)
-    window.resize(num_lines, max_width)
+    new_dimensions = num_lines, max_width
+    window.resize(*new_dimensions)
     for line_index, metaline in enumerate(metalines):
         meta, line = metaline
         line = line[:max_width - 1]
@@ -237,7 +240,10 @@ def render_lines(metalines, window, max_width):
             attr = curses.color_pair(ColorPair.BLOCKQUOTE) | curses.A_ITALIC
         else:  # includes LineType.PARAGRAPH
             attr = curses.color_pair(ColorPair.NORMAL)
-        window.addstr(line, attr)
+        try:
+            window.addstr(line, attr)
+        except ValueError:
+            return new_dimensions
         if line_index < num_lines - 1:
             window.addstr("\n")
-    return num_lines, max_width
+    return new_dimensions
