@@ -25,7 +25,7 @@ class Browser:
         self.tab = None
         self.status_line = None
         self.command_line = None
-        self.status_data = ("", 0)
+        self.status_data = ("", 0, 0)
         self.current_url = ""
         self.running = True
         self.history = History()
@@ -153,20 +153,21 @@ class Browser:
 
     def refresh_status_line(self):
         """Refresh status line contents."""
-        text, pair = self.status_data
+        text, pair, attributes = self.status_data
         text = text[:self.w - 1]
-        self.status_line.addstr(0, 0, text, curses.color_pair(pair))
+        color = curses.color_pair(pair)
+        self.status_line.addstr(0, 0, text, color | attributes)
         self.status_line.clrtoeol()
         self.status_line.refresh()
 
     def set_status(self, text):
         """Set a regular message in the status bar."""
-        self.status_data = text, ColorPair.NORMAL
+        self.status_data = text, ColorPair.NORMAL, curses.A_ITALIC
         self.refresh_status_line()
 
     def set_status_error(self, text):
         """Set an error message in the status bar."""
-        self.status_data = text, ColorPair.ERROR
+        self.status_data = text, ColorPair.ERROR, 0
         self.refresh_status_line()
 
     def open_url(self, url, base_url=None, redirects=0, assume_absolute=False):
