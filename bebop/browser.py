@@ -69,49 +69,61 @@ class Browser:
             self.open_url(start_url, assume_absolute=True)
 
         while self.running:
+            try:
+                self.handle_inputs()
+            except KeyboardInterrupt:
+                self.set_status("Cancelled.")
+
+    def handle_inputs(self):
+        char = self.screen.getch()
+        if char == ord(":"):
+            self.quick_command("")
+        elif char == ord("r"):
+            self.reload_page()
+        elif char == ord("h"):
+            self.scroll_page_horizontally(-1)
+        elif char == ord("H"):
+            self.scroll_page_horizontally(-3)
+        elif char == ord("j"):
+            self.scroll_page_vertically(1)
+        elif char == ord("J"):
+            self.scroll_page_vertically(3)
+        elif char == ord("k"):
+            self.scroll_page_vertically(-1)
+        elif char == ord("K"):
+            self.scroll_page_vertically(-3)
+        elif char == ord("l"):
+            self.scroll_page_horizontally(1)
+        elif char == ord("L"):
+            self.scroll_page_horizontally(3)
+        elif char == ord("f"):
+            self.scroll_page_vertically(self.page_pad_size[0])
+        elif char == ord("b"):
+            self.scroll_page_vertically(-self.page_pad_size[0])
+        elif char == ord("o"):
+            self.quick_command("open")
+        elif char == ord("p"):
+            self.go_back()
+        elif char == ord("g"):
             char = self.screen.getch()
-            if char == ord(":"):
-                self.quick_command("")
-            elif char == ord("r"):
-                self.reload_page()
-            elif char == ord("s"):
-                self.set_status(f"h {self.h} w {self.w}")
-            elif char == ord("h"):
-                self.scroll_page_horizontally(-1)
-            elif char == ord("H"):
-                self.scroll_page_horizontally(-3)
-            elif char == ord("j"):
-                self.scroll_page_vertically(1)
-            elif char == ord("J"):
-                self.scroll_page_vertically(3)
-            elif char == ord("k"):
-                self.scroll_page_vertically(-1)
-            elif char == ord("K"):
-                self.scroll_page_vertically(-3)
-            elif char == ord("l"):
-                self.scroll_page_horizontally(1)
-            elif char == ord("L"):
-                self.scroll_page_horizontally(3)
-            elif char == ord("f"):
-                self.scroll_page_vertically(self.page_pad_size[0])
-            elif char == ord("b"):
-                self.scroll_page_vertically(-self.page_pad_size[0])
-            elif char == ord("o"):
-                self.quick_command("open")
-            elif char == ord("p"):
-                self.go_back()
-            elif char == ord("g"):
-                char = self.screen.getch()
-                if char == ord("g"):
-                    self.scroll_page_vertically(-inf)
-            elif char == ord("G"):
-                self.scroll_page_vertically(inf)
-            elif curses.ascii.isdigit(char):
-                self.handle_digit_input(char)
-            elif char == curses.KEY_MOUSE:
-                self.handle_mouse(*curses.getmouse())
-            elif char == curses.KEY_RESIZE:
-                self.handle_resize()
+            if char == ord("g"):
+                self.scroll_page_vertically(-inf)
+        elif char == ord("G"):
+            self.scroll_page_vertically(inf)
+        elif curses.ascii.isdigit(char):
+            self.handle_digit_input(char)
+        elif char == curses.KEY_MOUSE:
+            self.handle_mouse(*curses.getmouse())
+        elif char == curses.KEY_RESIZE:
+            self.handle_resize()
+        elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
+            self.screen.nodelay(True)
+            ch = self.screen.getch()
+            if ch == -1:
+                self.set_status(self.current_url)
+            else:
+                pass  # No alt-key shortcuts for now!
+            self.screen.nodelay(False)
 
     @property
     def page_pad_size(self):
@@ -244,6 +256,9 @@ class Browser:
             self.set_status_error(error)
         elif response.generic_code == 10:
             self.handle_input_request(url, response)
+        else:
+            error = f"Unhandled response code {response.code}"
+            self.set_status_error(error)
 
     def load_page(self, gemtext: bytes):
         """Load Gemtext data as the current page."""
