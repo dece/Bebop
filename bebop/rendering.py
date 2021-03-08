@@ -46,9 +46,12 @@ def format_elements(elements, width):
     context = {"last_link_id": 0, "width": width}
     separator = ({"type": LineType.NONE}, "")
     has_margins = False
+    thin_type = None
     for index, element in enumerate(elements):
         previous_had_margins = has_margins
+        last_thin_type = thin_type
         has_margins = False
+        thin_type = None
         if isinstance(element, Title):
             element_metalines = format_title(element, context)
             has_margins = True
@@ -57,6 +60,7 @@ def format_elements(elements, width):
             has_margins = True
         elif isinstance(element, Link):
             element_metalines = format_link(element, context)
+            thin_type = LineType.LINK
         elif isinstance(element, Preformatted):
             element_metalines = format_preformatted(element, context)
             has_margins = True
@@ -65,17 +69,21 @@ def format_elements(elements, width):
             has_margins = True
         elif isinstance(element, ListItem):
             element_metalines = format_list_item(element, context)
+            thin_type = LineType.LIST_ITEM
         else:
             continue
         # If current element requires margins and is not the first elements,
         # separate from previous element. Also do it if the current element does
         # not require margins but follows an element that required it (e.g. link
-        # after a paragraph).
+        # after a paragraph). Also do it if both the current and previous
+        # elements do not require margins but differ in type.
         if (
             (has_margins and index > 0)
             or (not has_margins and previous_had_margins)
+            or (not has_margins and thin_type != last_thin_type)
         ):
             metalines.append(separator)
+        # Append the element metalines now.
         metalines += element_metalines
     return metalines
 
@@ -240,7 +248,7 @@ def render_line(metaline, window, max_width):
     line = line[:max_width - 1]
     window.addstr(line, attributes)
     if meta["type"] == LineType.LINK and "url" in meta:
-        url_text = f' - {meta["url"]}'
+        url_text = f'  {meta["url"]}'
         attributes = (
             curses.color_pair(ColorPair.LINK_PREVIEW)
             | curses.A_DIM
