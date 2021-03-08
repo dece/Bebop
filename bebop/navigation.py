@@ -17,6 +17,9 @@ def parse_url(url: str, absolute: bool =False):
       though it technically is not, e.g. "dece.space" is not absolute as it
       misses either the // delimiter.
     """
+    url = url.strip()
+    if url.startswith("file://"):
+        return urllib.parse.urlparse(url)
     if url.startswith("gemini://"):
         url = url[7:]
     parts = urllib.parse.urlparse(url, scheme="gemini")
@@ -42,5 +45,5 @@ def set_parameter(url: str, user_input: str):
     """Return a new URL with the user input escaped (RFC 3986) appended."""
     quoted_input = urllib.parse.quote(user_input)
     if "?" in url:
-        url = url.rsplit("?", maxsplit=1)[0]
+        url = url.split("?", maxsplit=1)[0]
     return url + "?" + quoted_input

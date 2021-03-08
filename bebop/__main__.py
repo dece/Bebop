@@ -11,8 +11,6 @@ def main():
 
     if args.url:
         start_url = args.url
-        if not start_url.startswith("gemini://"):
-            start_url = "gemini://" + start_url
     else:
         start_url = None
 

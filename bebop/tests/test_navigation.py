@@ -24,6 +24,10 @@ class TestNavigation(unittest.TestCase):
         self.assertEqual(res.netloc, "dece.space")
         self.assertEqual(res.path, "/index.html")
 
+        res = parse_url("file:///home/dece/gemini/index.gmi")
+        self.assertEqual(res.scheme, "file")
+        self.assertEqual(res.path, "/home/dece/gemini/index.gmi")
+
     def test_join_url(self):
         url = join_url("gemini://dece.space/", "some-file.gmi")
         self.assertEqual(url, "gemini://dece.space/some-file.gmi")

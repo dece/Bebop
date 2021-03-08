@@ -65,12 +65,10 @@ class Browser:
         )
         self.command_line = CommandLine(command_line_window)
 
-        pending_url = start_url
-        while self.running:
-            if pending_url:
-                self.open_url(pending_url)
-                pending_url = None
+        if start_url:
+            self.open_url(start_url, assume_absolute=True)
 
+        while self.running:
             char = self.screen.getch()
             if char == ord(":"):
                 self.quick_command("")
@@ -191,6 +189,8 @@ class Browser:
             self.open_gemini_url(sanitize_url(url), redirects)
         elif parts.scheme.startswith("http"):
             self.open_web_url(url)
+        elif parts.scheme == "file":
+            self.open_file(parts.path)
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
@@ -461,3 +461,15 @@ class Browser:
         """Open a Web URL. Currently relies in Python's webbrowser module."""
         self.set_status(f"Opening {url}")
         open_new_tab(url)
+
+    def open_file(self, filepath):
+        """Open a file and render it.
+
+        This should be used only on Gemtext files or at least text files.
+        Anything else will produce garbage and may crash the program.
+        """
+        try:
+            with open(filepath, "rb") as f:
+                self.load_page(f.read())
+        except (OSError, ValueError) as exc:
+            self.set_status_error(f"Failed to open file: {exc}")
