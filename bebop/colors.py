@@ -3,6 +3,7 @@ from enum import IntEnum
 
 
 class ColorPair(IntEnum):
+    # Colors for specific Gemtext line type.
     NORMAL       = 0
     ERROR        = 1
     LINK         = 2
@@ -12,6 +13,9 @@ class ColorPair(IntEnum):
     TITLE_3      = 6
     PREFORMATTED = 7
     BLOCKQUOTE   = 8
+
+    # Colors for other usage in the browser.
+    LINK_PREVIEW = 9
     DEBUG        = 99
 
 
@@ -26,4 +30,5 @@ def init_colors():
     curses.init_pair(ColorPair.TITLE_3, curses.COLOR_MAGENTA, -1)
     curses.init_pair(ColorPair.PREFORMATTED, curses.COLOR_YELLOW, -1)
     curses.init_pair(ColorPair.BLOCKQUOTE, curses.COLOR_CYAN, -1)
+    curses.init_pair(ColorPair.LINK_PREVIEW, curses.COLOR_WHITE, -1)
     curses.init_pair(ColorPair.DEBUG, curses.COLOR_BLACK, curses.COLOR_GREEN)

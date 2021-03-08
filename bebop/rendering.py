@@ -223,27 +223,49 @@ def render_lines(metalines, window, max_width):
     new_dimensions = num_lines, max_width
     window.resize(*new_dimensions)
     for line_index, metaline in enumerate(metalines):
-        meta, line = metaline
-        line = line[:max_width - 1]
-        line_type = meta["type"]
-        if line_type == LineType.TITLE_1:
-            attr = curses.color_pair(ColorPair.TITLE_1) | curses.A_BOLD
-        elif line_type == LineType.TITLE_2:
-            attr = curses.color_pair(ColorPair.TITLE_2) | curses.A_BOLD
-        elif line_type == LineType.TITLE_3:
-            attr = curses.color_pair(ColorPair.TITLE_3)
-        elif line_type == LineType.LINK:
-            attr = curses.color_pair(ColorPair.LINK)
-        elif line_type == LineType.PREFORMATTED:
-            attr = curses.color_pair(ColorPair.PREFORMATTED)
-        elif line_type == LineType.BLOCKQUOTE:
-            attr = curses.color_pair(ColorPair.BLOCKQUOTE) | curses.A_ITALIC
-        else:  # includes LineType.PARAGRAPH
-            attr = curses.color_pair(ColorPair.NORMAL)
         try:
-            window.addstr(line, attr)
+            render_line(metaline, window, max_width)
         except ValueError:
             return new_dimensions
         if line_index < num_lines - 1:
             window.addstr("\n")
     return new_dimensions
+
+
+def render_line(metaline, window, max_width):
+    """Write a single line to the window."""
+    meta, line = metaline
+    line_type = meta["type"]
+    attributes = get_base_line_attributes(line_type)
+    line = line[:max_width - 1]
+    window.addstr(line, attributes)
+    if meta["type"] == LineType.LINK and "url" in meta:
+        url_text = f' - {meta["url"]}'
+        attributes = (
+            curses.color_pair(ColorPair.LINK_PREVIEW)
+            | curses.A_DIM
+            | curses.A_ITALIC
+        )
+        window.addstr(url_text, attributes)
+
+
+def get_base_line_attributes(line_type):
+    """Return the base attributes for this line type.
+
+    Other attributes may be freely used later for this line type but this is
+    what is used at the start of most lines of the given type.
+    """
+    if line_type == LineType.TITLE_1:
+        return curses.color_pair(ColorPair.TITLE_1) | curses.A_BOLD
+    elif line_type == LineType.TITLE_2:
+        return curses.color_pair(ColorPair.TITLE_2) | curses.A_BOLD
+    elif line_type == LineType.TITLE_3:
+        return curses.color_pair(ColorPair.TITLE_3)
+    elif line_type == LineType.LINK:
+        return curses.color_pair(ColorPair.LINK)
+    elif line_type == LineType.PREFORMATTED:
+        return curses.color_pair(ColorPair.PREFORMATTED)
+    elif line_type == LineType.BLOCKQUOTE:
+        return curses.color_pair(ColorPair.BLOCKQUOTE) | curses.A_ITALIC
+    else:  # includes LineType.PARAGRAPH
+        return curses.color_pair(ColorPair.NORMAL)
