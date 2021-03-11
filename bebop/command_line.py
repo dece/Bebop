@@ -1,3 +1,4 @@
+"""Integrated command-line implementation."""
 import curses
 import curses.textpad
 

@@ -1,3 +1,5 @@
+"""Color definitions for curses."""
+
 import curses
 from enum import IntEnum
 

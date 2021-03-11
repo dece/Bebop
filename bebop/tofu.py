@@ -1,3 +1,9 @@
+"""TOFU implementation.
+
+As of writing there is still some debate around it, so it is quite messy and
+requires more clarity both in specification and in our own implementation.
+"""
+
 import datetime
 import hashlib
 import re

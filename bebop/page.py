@@ -1,3 +1,5 @@
+"""Single Gemini page curses management."""
+
 import curses
 
 from bebop.gemtext import parse_gemtext

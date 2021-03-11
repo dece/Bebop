@@ -1,3 +1,5 @@
+"""Main browser logic."""
+
 import curses
 import curses.ascii
 import curses.textpad

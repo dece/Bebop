@@ -1,3 +1,5 @@
+"""URI (RFC 3986) helpers for Gemini navigation."""
+
 import urllib.parse
 
 
@@ -42,7 +44,7 @@ def join_url(base_url: str, url: str):
 
 
 def set_parameter(url: str, user_input: str):
-    """Return a new URL with the user input escaped (RFC 3986) appended."""
+    """Return a new URL with the escaped user input appended."""
     quoted_input = urllib.parse.quote(user_input)
     if "?" in url:
         url = url.split("?", maxsplit=1)[0]

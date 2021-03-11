@@ -1,3 +1,10 @@
+"""Rendering Gemtext in curses.
+
+In Bebop we use a list of elements as produced by our parser. These elements are
+rendered into so-called "metalines", which are the text lines as they will be
+displayed, along with associated meta-data such as its type or a link's URL.
+"""
+
 import curses
 import string
 from enum import IntEnum

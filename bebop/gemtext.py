@@ -1,3 +1,10 @@
+"""Gemtext parser.
+
+To allow a flexible rendering of the content, the parser produces a list of
+"elements", each being an instance of one of the dataclasses defined in this
+module. A renderer can then completely abstract the original document.
+"""
+
 import re
 import typing
 from dataclasses import dataclass

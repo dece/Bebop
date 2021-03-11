@@ -1,3 +1,5 @@
+"""Mouse support utilities."""
+
 from enum import IntEnum
 
 

@@ -1,3 +1,5 @@
+"""Gemini protocol implementation."""
+
 import re
 import socket
 import ssl
@@ -18,7 +20,17 @@ def parse_gemini_url(url):
 
 
 class Request:
-    """A Gemini request."""
+    """A Gemini request.
+
+    Details about the request itself can be found in the Gemini specification.
+    This class allows you to do a request in 2 times: first opening the
+    TLS connection to apply security checks, then aborting or proceeding by
+    sending the request header and receiving the response:
+
+    1. Instantiate a Request.
+    2. `connect` opens the connection, leaves the caller free to check stuff.
+    3. `proceed` or `abort` can be called.
+    """
 
     # Initial state, connection is not established yet.
     STATE_INIT = 0

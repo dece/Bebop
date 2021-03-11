@@ -1,4 +1,7 @@
+"""History management."""
+
 class History:
+    """Basic browsing history manager."""
 
     def __init__(self):
         self.urls = []
