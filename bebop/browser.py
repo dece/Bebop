@@ -84,35 +84,33 @@ class Browser:
         elif char == ord("r"):
             self.reload_page()
         elif char == ord("h"):
-            self.scroll_page_horizontally(-1)
-        elif char == ord("H"):
             self.scroll_page_horizontally(-3)
+        elif char == ord("H"):
+            pass  # TODO h-scroll whole page left
         elif char == ord("j"):
-            self.scroll_page_vertically(1)
-        elif char == ord("J"):
             self.scroll_page_vertically(3)
+        elif char == ord("J"):
+            self.scroll_whole_page_down()
         elif char == ord("k"):
-            self.scroll_page_vertically(-1)
-        elif char == ord("K"):
             self.scroll_page_vertically(-3)
+        elif char == ord("K"):
+            self.scroll_whole_page_up()
         elif char == ord("l"):
-            self.scroll_page_horizontally(1)
-        elif char == ord("L"):
             self.scroll_page_horizontally(3)
-        elif char == ord("f"):
-            self.scroll_page_vertically(self.page_pad_size[0])
-        elif char == ord("b"):
-            self.scroll_page_vertically(-self.page_pad_size[0])
-        elif char == ord("o"):
-            self.quick_command("open")
-        elif char == ord("p"):
-            self.go_back()
+        elif char == ord("L"):
+            pass  # TODO h-scroll whole page right
+        elif char == ord("^"):
+            pass # TODO reset horizontal scrolling
         elif char == ord("g"):
             char = self.screen.getch()
             if char == ord("g"):
                 self.scroll_page_vertically(-inf)
         elif char == ord("G"):
             self.scroll_page_vertically(inf)
+        elif char == ord("o"):
+            self.quick_command("open")
+        elif char == ord("p"):
+            self.go_back()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -121,12 +119,23 @@ class Browser:
             self.handle_resize()
         elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
             self.screen.nodelay(True)
-            ch = self.screen.getch()
-            if ch == -1:
+            char = self.screen.getch()
+            if char == -1:
                 self.set_status(self.current_url)
-            else:
-                pass  # No alt-key shortcuts for now!
+            else:  # ALT keybinds.
+                if char == ord("h"):
+                    self.scroll_page_horizontally(-1)
+                elif char == ord("j"):
+                    self.scroll_page_vertically(1)
+                elif char == ord("k"):
+                    self.scroll_page_vertically(-1)
+                elif char == ord("l"):
+                    self.scroll_page_horizontally(1)
             self.screen.nodelay(False)
+
+        ctrl_char = curses.unctrl(char)
+        if ctrl_char == "a":
+            self.set_status("yup!")
 
     @property
     def page_pad_size(self):
@@ -382,6 +391,14 @@ class Browser:
             require_refresh = self.page.scroll_v(by_lines, window_height)
         if require_refresh:
             self.refresh_page()
+
+    def scroll_whole_page_down(self):
+        """Scroll down by a whole page."""
+        self.scroll_page_vertically(self.page_pad_size[0])
+
+    def scroll_whole_page_up(self):
+        """Scroll up by a whole page."""
+        self.scroll_page_vertically(-self.page_pad_size[0])
 
     def scroll_page_horizontally(self, by_columns):
         """Scroll page horizontally."""
