@@ -5,7 +5,7 @@ https://github.com/ActiveState/appdirs/blob/master/appdirs.py
 """
 
 from os import getenv
-from os.path import expanduser, join
+from os.path import expanduser
 from pathlib import Path
 
 

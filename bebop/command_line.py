@@ -3,7 +3,6 @@
 import curses
 import curses.ascii
 import curses.textpad
-import typing
 
 from bebop.links import Links
 
@@ -129,7 +128,7 @@ class CommandLine:
             return 1, None
         try:
             link_id = int(link_input)
-        except ValueError as exc:
+        except ValueError:
             return 2, f"Invalid link ID {link_input}."
         return 0, link_id
 

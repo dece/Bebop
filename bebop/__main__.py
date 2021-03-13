@@ -1,5 +1,4 @@
 import argparse
-import os
 
 from bebop.browser import Browser
 from bebop.fs import get_user_data_path

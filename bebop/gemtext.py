@@ -6,8 +6,8 @@ module. A renderer can then completely abstract the original document.
 """
 
 import re
-import typing
 from dataclasses import dataclass
+from typing import List
 
 
 @dataclass
@@ -31,7 +31,7 @@ class Link:
 
 @dataclass
 class Preformatted:
-    lines: typing.List[str]
+    lines: List[str]
     FENCE = "```"
 
 
