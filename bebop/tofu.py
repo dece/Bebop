@@ -8,6 +8,7 @@ import datetime
 import hashlib
 import re
 from enum import Enum
+from pathlib import Path
 
 import asn1crypto.x509
 
@@ -15,7 +16,7 @@ import asn1crypto.x509
 STASH_LINE_RE = re.compile(r"(\S+) (\S+) (\S+) (\d+)")
 
 
-def load_cert_stash(stash_path):
+def load_cert_stash(stash_path: Path):
     """Load the certificate stash from the file, or None on error.
 
     The stash is a dict with host names as keys and tuples as values. Tuples
@@ -42,7 +43,7 @@ def load_cert_stash(stash_path):
     return stash
 
 
-def save_cert_stash(stash, stash_path):
+def save_cert_stash(stash: dict, stash_path: Path):
     """Save the certificate stash."""
     try:
         with open(stash_path, "wt") as stash_file:
@@ -51,7 +52,7 @@ def save_cert_stash(stash, stash_path):
                 if not is_permanent:
                     continue
                 entry_line = f"{name} {algo} {fingerprint} {timestamp}\n"
-                stash_path.write(entry_line)
+                stash_file.write(entry_line)
     except (OSError, ValueError):
         pass
 
