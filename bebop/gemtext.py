@@ -94,4 +94,9 @@ def parse_gemtext(text: str):
         else:
             elements.append(Paragraph(line))
 
+    # If a preformatted block is not closed before the file ends, consider it
+    # closed anyway; the spec does not seem to talk about that case.
+    if preformatted:
+        elements.append(preformatted)
+
     return elements
