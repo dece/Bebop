@@ -252,15 +252,15 @@ class Browser:
         if not connected:
             if req.state == Request.STATE_ERROR_CERT:
                 error = f"Certificate was missing or corrupt ({url})."
-                self.set_status_error(error)
             elif req.state == Request.STATE_UNTRUSTED_CERT:
-                self.set_status_error(f"Certificate has been changed ({url}).")
+                error = f"Certificate has been changed ({url})."
                 # TODO propose the user ways to handle this.
             elif req.state == Request.STATE_CONNECTION_FAILED:
-                error = f": {req.error}" if req.error else "."
-                self.set_status_error(f"Connection failed ({url}){error}")
+                error_details = f": {req.error}" if req.error else "."
+                error = f"Connection failed ({url})" + error_details
             else:
-                self.set_status_error(f"Connection failed ({url}).")
+                error = f"Connection failed ({url})."
+            self.set_status_error(error)
             return
 
         if req.state == Request.STATE_INVALID_CERT:
