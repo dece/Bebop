@@ -131,10 +131,10 @@ class Browser:
                 elif char == ord("l"):
                     self.scroll_page_horizontally(1)
             self.screen.nodelay(False)
-
-        ctrl_char = curses.unctrl(char)
-        if ctrl_char == "a":
-            self.set_status("yup!")
+        # else:
+        #     unctrled = curses.unctrl(char)
+        #     if unctrled == b"^T":
+        #         self.set_status("test!")
 
     @property
     def page_pad_size(self):
@@ -281,13 +281,14 @@ class Browser:
             return
 
         if response.code == 20:
-            # TODO handle MIME type; assume it's gemtext for now.
-            text = response.content.decode("utf-8", errors="replace")
-            self.load_page(Page.from_gemtext(text))
-            if self.current_url and history:
-                self.history.push(self.current_url)
-            self.current_url = url
-            self.set_status(url)
+            handle_code = self.handle_response_content(response)
+            if handle_code == 0:
+                if self.current_url and history:
+                    self.history.push(self.current_url)
+                self.current_url = url
+                self.set_status(url)
+            elif handle_code == 1:
+                self.set_status(f"Downloaded {url}.")
         elif response.generic_code == 30 and response.meta:
             self.open_url(response.meta, base_url=url, redirects=redirects + 1)
         elif response.generic_code in (40, 50):
@@ -298,6 +299,41 @@ class Browser:
         else:
             error = f"Unhandled response code {response.code}"
             self.set_status_error(error)
+
+    def handle_response_content(self, response: Response) -> int:
+        """Handle a response's content from a Gemini server.
+
+        According to the MIME type received or inferred, render or download the
+        response's content.
+
+        Currently only text/gemini content is rendered.
+
+        Arguments:
+        - response: a successful Response.
+
+        Returns:
+        An error code: 0 means a page has been loaded, so any book-keeping such
+        as history management can be applied; 1 means a content has been
+        successfully retrieved but has not been displayed (e.g. non-text
+        content) nor saved as a page; 2 means that the content could not be
+        handled, either due to bogus MIME type or MIME parameters.
+        """
+        mime_type = response.get_mime_type()
+        if mime_type.main_type == "text":
+            if mime_type.sub_type == "gemini":
+                encoding = mime_type.charset
+                try:
+                    text = response.content.decode(encoding, errors="replace")
+                except LookupError:
+                    self.set_status_error("Unknown encoding {encoding}.")
+                    return 2
+                self.load_page(Page.from_gemtext(text))
+                return 0
+            else:
+                pass  # TODO
+        else:
+            pass  # TODO
+        return 1
 
     def load_page(self, page: Page):
         """Load Gemtext data as the current page."""

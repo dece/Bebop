@@ -5,7 +5,9 @@ import socket
 import ssl
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Optional
 
+from bebop.mime import DEFAULT_MIME_TYPE, MimeType
 from bebop.tofu import CertStatus, CERT_STATUS_INVALID, validate_cert
 
 
@@ -190,11 +192,16 @@ class Response:
     MAX_META_LEN = 1024
 
     @property
-    def generic_code(self):
+    def generic_code(self) -> int:
+        """See `Response.get_generic_code`."""
         return Response.get_generic_code(self.code)
 
+    def get_mime_type(self) -> MimeType:
+        """Return the MIME type if possible, else the default MIME type."""
+        return MimeType.from_str(self.meta) or DEFAULT_MIME_TYPE
+
     @staticmethod
-    def parse(data):
+    def parse(data: bytes) -> Optional["Response"]:
         """Parse a received response."""
         try:
             response_header_len = data.index(LINE_TERM)
@@ -216,6 +223,6 @@ class Response:
         return response
 
     @staticmethod
-    def get_generic_code(code):
+    def get_generic_code(code) -> int:
         """Return the generic version (x0) of this code."""
         return code - (code % 10)

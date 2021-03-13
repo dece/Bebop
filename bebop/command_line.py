@@ -47,7 +47,8 @@ class CommandLine:
             command = ""
         except TerminateCommandInterrupt as exc:
             command = exc.command
-        command = command[1:].rstrip()
+        else:
+            command = command[1:].rstrip()
         curses.curs_set(0)
         self.clear()
         return command
