@@ -31,6 +31,7 @@ class Browser:
         self.status_data = ("", 0, 0)
         self.current_url = ""
         self.history = History()
+        self.cache = {}
 
     @property
     def h(self):
@@ -246,6 +247,15 @@ class Browser:
         After initiating the connection, TODO
         """
         self.set_status(f"Loading {url}")
+
+        if url in self.cache:
+            self.load_page(self.cache[url])
+            if self.current_url and history:
+                self.history.push(self.current_url)
+            self.current_url = url
+            self.set_status(url)
+            return
+
         req = Request(url, self.stash)
         connected = req.connect()
         if not connected:
@@ -286,6 +296,7 @@ class Browser:
                 if self.current_url and history:
                     self.history.push(self.current_url)
                 self.current_url = url
+                self.cache[url] = self.page_pad.current_page
                 self.set_status(url)
             elif handle_code == 1:
                 self.set_status(f"Downloaded {url}.")
