@@ -11,6 +11,7 @@ from enum import Enum
 
 import asn1crypto.x509
 
+
 STASH_LINE_RE = re.compile(r"(\S+) (\S+) (\S+) (\d+)")
 
 

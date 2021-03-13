@@ -11,6 +11,7 @@ from bebop.colors import ColorPair, init_colors
 from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
     TerminateCommandInterrupt)
 from bebop.history import History
+from bebop.links import Links
 from bebop.mouse import ButtonState
 from bebop.navigation import join_url, parse_url, sanitize_url, set_parameter
 from bebop.page import Page
@@ -21,10 +22,10 @@ class Browser:
     """Manage the events, inputs and rendering."""
     
     def __init__(self, cert_stash):
-        self.stash = cert_stash
+        self.stash = cert_stash or {}
         self.screen = None
         self.dim = (0, 0)
-        self.tab = None
+        self.page = None
         self.status_line = None
         self.command_line = None
         self.status_data = ("", 0, 0)
@@ -172,6 +173,28 @@ class Browser:
         self.status_data = text, ColorPair.ERROR, 0
         self.refresh_status_line()
 
+    def quick_command(self, command):
+        """Shortcut method to take user input with a prefixed command string."""
+        prefix = f"{command} " if command else ""
+        user_input = self.command_line.focus(":", prefix=prefix)
+        if not user_input:
+            return
+        self.process_command(user_input)
+
+    def process_command(self, command_text: str):
+        """Handle a client command."""
+        words = command_text.split()
+        num_words = len(words)
+        if num_words == 0:
+            return
+        command = words[0]
+        if num_words == 1:
+            if command in ("q", "quit"):
+                self.running = False
+            return
+        if command in ("o", "open"):
+            self.open_url(words[1], assume_absolute=True)
+
     def open_url(self, url, base_url=None, redirects=0, assume_absolute=False):
         """Try to open an URL.
 
@@ -210,7 +233,10 @@ class Browser:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
     def open_gemini_url(self, url, redirects=0, history=True):
-        """Open a Gemini URL and set the formatted response as content."""
+        """Open a Gemini URL and set the formatted response as content.
+
+        After initiating the connection, TODO
+        """
         self.set_status(f"Loading {url}")
         req = Request(url, self.stash)
         connected = req.connect()
@@ -274,130 +300,18 @@ class Browser:
         else:
             self.refresh_page()
 
-    def take_user_input(self, type_char: str =":", prefix: str =""):
-        """Focus command line to let the user type something."""
-        return self.command_line.focus(
-            type_char,
-            validator=self.validate_common_char,
-            prefix=prefix,
-        )
-
-    def validate_common_char(self, ch: int):
-        """Generic input validator, handles a few more cases than default.
-
-        This validator can be used as a default validator as it handles, on top
-        of the Textbox defaults:
-        - Erasing the first command char, i.e. clearing the line, cancels the
-          command input.
-        - Pressing ESC also cancels the input.
-
-        This validator can be safely called at the beginning of other validators
-        to handle the keys above.
-        """
-        if ch == curses.KEY_BACKSPACE:  # Cancel input if all line is cleaned.
-            text = self.command_line.gather()
-            if len(text) == 0:
-                raise EscapeCommandInterrupt()
-        elif ch == curses.ascii.ESC:  # Could be ESC or ALT
-            self.screen.nodelay(True)
-            ch = self.screen.getch()
-            if ch == -1:
-                raise EscapeCommandInterrupt()
-            self.screen.nodelay(False)
-        return ch
-
-    def quick_command(self, command):
-        """Shortcut method to take user input with a prefixed command string."""
-        prefix = f"{command} " if command else ""
-        user_input = self.take_user_input(prefix=prefix)
-        if not user_input:
-            return
-        self.process_command(user_input)
-
-    def process_command(self, command_text: str):
-        words = command_text.split()
-        command = words[0]
-        if command in ("o", "open"):
-            self.open_url(words[1], assume_absolute=True)
-        elif command in ("q", "quit"):
-            self.running = False
-
     def handle_digit_input(self, init_char: int):
-        """Handle a initial digit input by the user.
-
-        When a digit key is pressed, the user intents to visit a link (or
-        dropped something on the numpad). To reduce the number of key types
-        needed, Bebop uses the following algorithm:
-        - If the current user input identifies a link without ambiguity, it is
-          used directly.
-        - If it is ambiguous, the user either inputs as many digits required
-          to disambiguate the link ID, or press enter to validate her input.
-
-        Examples:
-        - I have 3 links. Pressing "2" takes me to link 2.
-        - I have 15 links. Pressing "3" takes me to link 3 (no ambiguity).
-        - I have 15 links. Pressing "1" and "2" takes me to link 12.
-        - I have 456 links. Pressing "1", "2" and Enter takes me to link 12.
-        - I have 456 links. Pressing "1", "2" and "6" takes me to link 126.
-        """
-        digit = init_char & 0xf
+        """Focus command-line to select the link ID to follow."""
+        if not self.page or self.page.links is None:
+            return
         links = self.page.links
-        num_links = len(links)
-        # If there are less than 10 links, just open it now.
-        if num_links < 10:
-            self.open_link(links, digit)
-            return
-        # Else check if the digit alone is sufficient.
-        digit = chr(init_char)
-        max_digits = 0
-        while num_links:
-            max_digits += 1
-            num_links //= 10
-        disambiguous = self.disambiguate_link_id(digit, links, max_digits)
-        if disambiguous is not None:
-            self.open_link(links, disambiguous)
-            return
-        # Else, focus the command line to let the user input more digits.
-        validator = lambda ch: self._validate_link_digit(ch, links, max_digits)
-        link_input = self.command_line.focus("&", validator, digit)
-        if not link_input:
-            return
-        try:
-            link_id = int(link_input)
-        except ValueError as exc:
-            self.set_status_error(f"Invalid link ID {link_input}.")
-            return
-        self.open_link(links, link_id)
+        err, val = self.command_line.focus_for_link_navigation(init_char, links)
+        if err == 0:
+            self.open_link(links, val)  # type: ignore
+        elif err == 2:
+            self.set_status_error(val)
 
-    def _validate_link_digit(self, ch: int, links, max_digits: int):
-        """Handle input chars to be used as link ID."""
-        # Handle common chars.
-        ch = self.validate_common_char(ch)
-        # Only accept digits. If we reach the amount of required digits, open
-        # link now and leave command line. Else just process it.
-        if curses.ascii.isdigit(ch):
-            digits = self.command_line.gather() + chr(ch)
-            disambiguous = self.disambiguate_link_id(digits, links, max_digits)
-            if disambiguous is not None:
-                raise TerminateCommandInterrupt(disambiguous)
-            return ch
-        # If not a digit but a printable character, ignore it.
-        if curses.ascii.isprint(ch):
-            return 0
-        # Everything else could be a control character and should be processed.
-        return ch
-
-    def disambiguate_link_id(self, digits: str, links, max_digits: int):
-        """Return the only possible link ID as str, or None on ambiguities."""
-        if len(digits) == max_digits:
-            return int(digits)
-        candidates = [
-            link_id for link_id, url in links.items()
-            if str(link_id).startswith(digits)
-        ]
-        return candidates[0] if len(candidates) == 1 else None
-
-    def open_link(self, links, link_id: int):
+    def open_link(self, links: Links, link_id: int):
         """Open the link with this link ID."""
         if not link_id in links:
             self.set_status_error(f"Unknown link ID {link_id}.")
@@ -405,11 +319,12 @@ class Browser:
         self.open_url(links[link_id])
 
     def handle_input_request(self, from_url: str, response: Response):
+        """Focus command-line to pass input to the server."""
         if response.meta:
             self.set_status(f"Input needed: {response.meta}")
         else:
             self.set_status("Input needed:")
-        user_input = self.take_user_input("?")
+        user_input = self.command_line.focus("?")
         if user_input:
             url = set_parameter(from_url, user_input)
             self.open_gemini_url(url)
@@ -451,6 +366,12 @@ class Browser:
         self.refresh_windows()
 
     def scroll_page_vertically(self, by_lines):
+        """Scroll page vertically.
+
+        If `by_lines` is an integer (positive or negative), scroll the page by
+        this amount of lines. If `by_lines` is one of the floats inf and -inf,
+        go to the end of file and beginning of file, respectively.
+        """
         window_height = self.h - 2
         require_refresh = False
         if by_lines == inf:
@@ -463,10 +384,12 @@ class Browser:
             self.refresh_page()
 
     def scroll_page_horizontally(self, by_columns):
+        """Scroll page horizontally."""
         if self.page.scroll_h(by_columns, self.w):
             self.refresh_page()
 
     def reload_page(self):
+        """Reload the page, if one has been previously loaded."""
         if self.current_url:
             self.open_gemini_url(self.current_url, history=False)
 

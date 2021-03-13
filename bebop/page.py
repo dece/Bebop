@@ -3,6 +3,7 @@
 import curses
 
 from bebop.gemtext import parse_gemtext
+from bebop.links import Links
 from bebop.rendering import format_elements, render_lines
 
 
@@ -19,21 +20,23 @@ class Page:
         self.metalines = []
         self.current_line = 0
         self.current_column = 0
-        self.links = {}
+        self.links = Links()
 
     def show_gemtext(self, gemtext: bytes):
         """Render Gemtext data in the content pad."""
+        # Parse and format Gemtext.
         elements = parse_gemtext(gemtext)
         self.metalines = format_elements(elements, 80)
-        self.links = {
-            meta["link_id"]: meta["url"]
-            for meta, _ in self.metalines
-            if "link_id" in meta and "url" in meta
-        }
+        # Render metalines.
         self.pad.clear()
         self.dim = render_lines(self.metalines, self.pad, Page.MAX_COLS)
         self.current_line = 0
         self.current_column = 0
+        # Aggregate links for navigation.
+        self.links = Links()
+        for meta, _ in self.metalines:
+            if "link_id" in meta and "url" in meta:
+                self.links[meta["link_id"]] = meta["url"]
 
     def refresh_content(self, x, y):
         """Refresh content pad's view using the current line/column."""
