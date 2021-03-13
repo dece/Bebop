@@ -143,7 +143,7 @@ class CommandLine:
             digits = self.gather() + chr(ch)
             candidates = links.disambiguate(digits, max_digits)
             if len(candidates) == 1:
-                raise TerminateCommandInterrupt(candidates)
+                raise TerminateCommandInterrupt(candidates[0])
             return ch
         # If not a digit but a printable character, ignore it.
         if curses.ascii.isprint(ch):
