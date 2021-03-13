@@ -1,42 +1,49 @@
 """Single Gemini page curses management."""
 
 import curses
+from dataclasses import dataclass, field
 
 from bebop.gemtext import parse_gemtext
 from bebop.links import Links
-from bebop.rendering import format_elements, render_lines
+from bebop.rendering import generate_metalines, render_lines
 
 
+@dataclass
 class Page:
+    """Page-related data."""
+    metalines: list = field(default_factory=list)
+    links: Links = field(default_factory=Links)
+
+    @staticmethod
+    def from_gemtext(gemtext: str):
+        """Produce a Page from a Gemtext file or string."""
+        elements = parse_gemtext(gemtext)
+        metalines = generate_metalines(elements, 80)
+        links = Links.from_metalines(metalines)
+        return Page(metalines, links)
+
+
+class PagePad:
     """Window containing page content."""
 
     MAX_COLS = 1000
 
     def __init__(self, initial_num_lines):
-        self.dim = (initial_num_lines, Page.MAX_COLS)
+        self.dim = (initial_num_lines, PagePad.MAX_COLS)
         self.pad = curses.newpad(*self.dim)
         self.pad.scrollok(True)
         self.pad.idlok(True)
-        self.metalines = []
         self.current_line = 0
         self.current_column = 0
-        self.links = Links()
+        self.current_page = None
 
-    def show_gemtext(self, gemtext: bytes):
+    def show_page(self, page: Page):
         """Render Gemtext data in the content pad."""
-        # Parse and format Gemtext.
-        elements = parse_gemtext(gemtext)
-        self.metalines = format_elements(elements, 80)
-        # Render metalines.
+        self.current_page = page
         self.pad.clear()
-        self.dim = render_lines(self.metalines, self.pad, Page.MAX_COLS)
+        self.dim = render_lines(page.metalines, self.pad, PagePad.MAX_COLS)
         self.current_line = 0
         self.current_column = 0
-        # Aggregate links for navigation.
-        self.links = Links()
-        for meta, _ in self.metalines:
-            if "link_id" in meta and "url" in meta:
-                self.links[meta["link_id"]] = meta["url"]
 
     def refresh_content(self, x, y):
         """Refresh content pad's view using the current line/column."""

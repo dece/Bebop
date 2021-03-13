@@ -4,17 +4,16 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
+import webbrowser
 from math import inf
-from webbrowser import open_new_tab
 
 from bebop.colors import ColorPair, init_colors
-from bebop.command_line import (CommandLine, EscapeCommandInterrupt,
-    TerminateCommandInterrupt)
+from bebop.command_line import CommandLine
 from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
 from bebop.navigation import join_url, parse_url, sanitize_url, set_parameter
-from bebop.page import Page
+from bebop.page import Page, PagePad
 from bebop.protocol import Request, Response
 
 
@@ -25,12 +24,12 @@ class Browser:
         self.stash = cert_stash or {}
         self.screen = None
         self.dim = (0, 0)
-        self.page = None
+        self.page_pad = None
         self.status_line = None
         self.command_line = None
+        self.running = True
         self.status_data = ("", 0, 0)
         self.current_url = ""
-        self.running = True
         self.history = History()
 
     @property
@@ -57,7 +56,7 @@ class Browser:
         init_colors()
 
         self.dim = self.screen.getmaxyx()
-        self.page = Page(self.h - 2)
+        self.page_pad = PagePad(self.h - 2)
         self.status_line = self.screen.subwin(
             *self.line_dim,
             *self.status_line_pos,
@@ -161,7 +160,7 @@ class Browser:
 
     def refresh_page(self):
         """Refresh the current page pad; it does not reload the page."""
-        self.page.refresh_content(*self.page_pad_size)
+        self.page_pad.refresh_content(*self.page_pad_size)
 
     def refresh_status_line(self):
         """Refresh status line contents."""
@@ -282,7 +281,9 @@ class Browser:
             return
 
         if response.code == 20:
-            self.load_page(response.content)
+            # TODO handle MIME type; assume it's gemtext for now.
+            text = response.content.decode("utf-8", errors="replace")
+            self.load_page(Page.from_gemtext(text))
             if self.current_url and history:
                 self.history.push(self.current_url)
             self.current_url = url
@@ -298,11 +299,11 @@ class Browser:
             error = f"Unhandled response code {response.code}"
             self.set_status_error(error)
 
-    def load_page(self, gemtext: bytes):
+    def load_page(self, page: Page):
         """Load Gemtext data as the current page."""
-        old_pad_height = self.page.dim[0]
-        self.page.show_gemtext(gemtext)
-        if self.page.dim[0] < old_pad_height:
+        old_pad_height = self.page_pad.dim[0]
+        self.page_pad.show_page(page)
+        if self.page_pad.dim[0] < old_pad_height:
             self.screen.clear()
             self.screen.refresh()
             self.refresh_windows()
@@ -311,9 +312,9 @@ class Browser:
 
     def handle_digit_input(self, init_char: int):
         """Focus command-line to select the link ID to follow."""
-        if not self.page or self.page.links is None:
+        if not self.page_pad or self.page_pad.current_page.links is None:
             return
-        links = self.page.links
+        links = self.page_pad.current_page.links
         err, val = self.command_line.focus_for_link_navigation(init_char, links)
         if err == 0:
             self.open_link(links, val)  # type: ignore
@@ -369,7 +370,7 @@ class Browser:
             self.command_line.window.mvwin(*self.command_line_pos)
         # If the content pad does not fit its whole place, we have to clean the
         # gap between it and the status line. Refresh all screen.
-        if self.page.dim[0] < self.h - 2:
+        if self.page_pad.dim[0] < self.h - 2:
             self.screen.clear()
             self.screen.refresh()
         self.refresh_windows()
@@ -384,11 +385,11 @@ class Browser:
         window_height = self.h - 2
         require_refresh = False
         if by_lines == inf:
-            require_refresh = self.page.go_to_end(window_height)
+            require_refresh = self.page_pad.go_to_end(window_height)
         elif by_lines == -inf:
-            require_refresh = self.page.go_to_beginning()
+            require_refresh = self.page_pad.go_to_beginning()
         else:
-            require_refresh = self.page.scroll_v(by_lines, window_height)
+            require_refresh = self.page_pad.scroll_v(by_lines, window_height)
         if require_refresh:
             self.refresh_page()
 
@@ -402,7 +403,7 @@ class Browser:
 
     def scroll_page_horizontally(self, by_columns):
         """Scroll page horizontally."""
-        if self.page.scroll_h(by_columns, self.w):
+        if self.page_pad.scroll_h(by_columns, self.w):
             self.refresh_page()
 
     def reload_page(self):
@@ -418,16 +419,20 @@ class Browser:
     def open_web_url(self, url):
         """Open a Web URL. Currently relies in Python's webbrowser module."""
         self.set_status(f"Opening {url}")
-        open_new_tab(url)
+        webbrowser.open_new_tab(url)
 
-    def open_file(self, filepath):
+    def open_file(self, filepath, encoding="utf-8"):
         """Open a file and render it.
 
         This should be used only on Gemtext files or at least text files.
-        Anything else will produce garbage and may crash the program.
+        Anything else will produce garbage and may crash the program. In the
+        future this should be able to use a different parser according to a MIME
+        type or something.
         """
         try:
-            with open(filepath, "rb") as f:
-                self.load_page(f.read())
+            with open(filepath, "rt", encoding=encoding) as f:
+                text = f.read()
         except (OSError, ValueError) as exc:
             self.set_status_error(f"Failed to open file: {exc}")
+            return
+        self.load_page(Page.from_gemtext(text))

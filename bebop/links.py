@@ -1,5 +1,7 @@
 """Links manager."""
 
+from typing import List
+
 
 class Links(dict):
 
@@ -11,3 +13,11 @@ class Links(dict):
             link_id for link_id, url in self.items()
             if str(link_id).startswith(digits)
         ]
+
+    @staticmethod
+    def from_metalines(metalines: List):
+        links = Links()
+        for meta, _ in metalines:
+            if "link_id" in meta and "url" in meta:
+                links[meta["link_id"]] = meta["url"]
+        return links

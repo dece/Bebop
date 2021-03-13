@@ -47,9 +47,8 @@ class ListItem:
     RE = re.compile(r"\*\s(.*)")
 
 
-def parse_gemtext(data):
-    """Parse UTF-8 encoded Gemtext as a list of elements."""
-    text = data.decode(encoding="utf8", errors="ignore")
+def parse_gemtext(text: str):
+    """Parse a string of Gemtext into a list of elements."""
     elements = []
     preformatted = None
     for line in text.splitlines():

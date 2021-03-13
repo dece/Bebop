@@ -36,7 +36,7 @@ class LineType(IntEnum):
     LIST_ITEM = 8
 
 
-def format_elements(elements, width):
+def generate_metalines(elements, width):
     """Format elements into a list of lines with metadata.
 
     The returned list ("metalines") are tuples (meta, line), meta being a
