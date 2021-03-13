@@ -42,6 +42,20 @@ def load_cert_stash(stash_path):
     return stash
 
 
+def save_cert_stash(stash, stash_path):
+    """Save the certificate stash."""
+    try:
+        with open(stash_path, "wt") as stash_file:
+            for name, entry in stash.values():
+                algo, fingerprint, timestamp, is_permanent = entry
+                if not is_permanent:
+                    continue
+                entry_line = f"{name} {algo} {fingerprint} {timestamp}\n"
+                stash_path.write(entry_line)
+    except (OSError, ValueError):
+        pass
+
+
 class CertStatus(Enum):
     """Value returned by validate_cert."""
     # Cert is valid: proceed.

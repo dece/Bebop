@@ -10,10 +10,10 @@ usage decently.
 [gemini]: https://gemini.circumlunar.space/
 [amfora]: https://github.com/makeworld-the-better-one/amfora
 
-If you are interested in Gemini and looking for a client, I recommend trying a
-graphical one like the excellent [Lagrange][lagrange] or [Kristall][kristall],
-or Amfora if you're feeling more at home in the terminal. Bebop won't attempt
-to support every feature other clients might have.
+If you are interested in Gemini and looking for a desktop/laptop client, I
+recommend trying a graphical one like the excellent [Lagrange][lagrange] or
+[Kristall][kristall], or Amfora if you're feeling more at home in the terminal.
+Bebop won't attempt to support every feature other clients might have.
 
 [lagrange]: https://git.skyjake.fi/skyjake/lagrange
 [kristall]: https://kristall.random-projects.net/
