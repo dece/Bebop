@@ -76,6 +76,16 @@ class PagePad:
         return False
 
     def scroll_h(self, num_columns: int, window_width: int =0):
+        """Make the content pad scroll left and right by num_columns.
+
+        Arguments:
+        - num_columns: amount of columns to scroll, can be negative to scroll
+          left.
+        - window_width: total window width, used to limit scrolling right.
+
+        Returns:
+        True if scrolling occured and the pad has to be refreshed.
+        """
         if num_columns < 0:
             num_columns = -num_columns
             min_column = 0
@@ -92,12 +102,14 @@ class PagePad:
         return False
 
     def go_to_beginning(self):
+        """Make the pad show its start; return True if a refresh is needed."""
         if self.current_line:
             self.current_line = 0
             return True
         return False
 
     def go_to_end(self, window_height):
+        """Make the pad show its bottom; return True if a refresh is needed."""
         max_line = self.dim[0] - window_height
         if self.current_line != max_line:
             self.current_line = max_line
