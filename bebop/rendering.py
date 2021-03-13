@@ -8,6 +8,7 @@ displayed, along with associated meta-data such as its type or a link's URL.
 import curses
 import string
 from enum import IntEnum
+from typing import List
 
 from bebop.colors import ColorPair
 from bebop.gemtext import (Blockquote, Link, ListItem, Paragraph, Preformatted,
@@ -160,7 +161,7 @@ def format_list_item(item: ListItem, context: dict):
     return [({"type": LineType.LIST_ITEM}, line) for line in lines]
 
 
-def wrap_words(text, width, indent=0):
+def wrap_words(text: str, width: int, indent: int =0) -> List[str]:
     """Wrap a text in several lines according to the renderer's width."""
     lines = []
     line = " " * indent
@@ -187,7 +188,8 @@ def wrap_words(text, width, indent=0):
     return lines
 
 
-def _explode_words(text):
+def _explode_words(text: str) -> List[str]:
+    """Split a string into a list of words."""
     words = []
     pos = 0
     while True:
@@ -205,7 +207,8 @@ def _explode_words(text):
         pos += sep_index + 1
 
 
-def _find_next_sep(text):
+def _find_next_sep(text: str):
+    """Find the next separator index and return both the separator and index."""
     indices = []
     for sep in SPLIT_CHARS:
         try:
