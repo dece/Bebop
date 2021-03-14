@@ -49,3 +49,12 @@ def set_parameter(url: str, user_input: str):
     if "?" in url:
         url = url.split("?", maxsplit=1)[0]
     return url + "?" + quoted_input
+
+
+def get_parent_url(url: str) -> str:
+    """Return the parent URL (one level up)."""
+    scheme, netloc, path, params, query, frag = parse_url(url)
+    last_slash = path.rstrip("/").rfind("/")
+    if last_slash > -1:
+        path = path[:last_slash + 1]
+    return urllib.parse.urlunparse((scheme, netloc, path, params, query, frag))

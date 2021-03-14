@@ -12,7 +12,7 @@ from bebop.command_line import CommandLine
 from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
-from bebop.navigation import join_url, parse_url, sanitize_url, set_parameter
+from bebop.navigation import *
 from bebop.page import Page, PagePad
 from bebop.protocol import Request, Response
 
@@ -111,6 +111,8 @@ class Browser:
             self.quick_command("open")
         elif char == ord("p"):
             self.go_back()
+        elif char == ord("u"):
+            self.go_to_parent_page()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -462,6 +464,11 @@ class Browser:
         """Go back in history if possible."""
         if self.history.has_links():
             self.open_gemini_url(self.history.pop(), history=False)
+
+    def go_to_parent_page(self):
+        """Go to the parent URL if possible."""
+        if self.current_url:
+            self.open_gemini_url(get_parent_url(self.current_url))
 
     def open_web_url(self, url):
         """Open a Web URL. Currently relies in Python's webbrowser module."""
