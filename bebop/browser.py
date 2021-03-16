@@ -245,14 +245,14 @@ class Browser:
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
-    def open_gemini_url(self, url, redirects=0, history=True):
+    def open_gemini_url(self, url, redirects=0, history=True, use_cache=True):
         """Open a Gemini URL and set the formatted response as content.
 
         After initiating the connection, TODO
         """
         self.set_status(f"Loading {url}")
 
-        if url in self.cache:
+        if use_cache and url in self.cache:
             self.load_page(self.cache[url])
             if self.current_url and history:
                 self.history.push(self.current_url)
@@ -460,7 +460,11 @@ class Browser:
     def reload_page(self):
         """Reload the page, if one has been previously loaded."""
         if self.current_url:
-            self.open_gemini_url(self.current_url, history=False)
+            self.open_gemini_url(
+                self.current_url,
+                history=False,
+                use_cache=False
+            )
 
     def go_back(self):
         """Go back in history if possible."""
