@@ -58,3 +58,9 @@ def get_parent_url(url: str) -> str:
     if last_slash > -1:
         path = path[:last_slash + 1]
     return urllib.parse.urlunparse((scheme, netloc, path, params, query, frag))
+
+
+def get_root_url(url: str) -> str:
+    """Return the root URL (basically discards path)."""
+    scheme, netloc, _, _, _, _ = parse_url(url)
+    return urllib.parse.urlunparse((scheme, netloc, "/", "", "", ""))

@@ -113,6 +113,8 @@ class Browser:
             self.go_back()
         elif char == ord("u"):
             self.go_to_parent_page()
+        elif char == ord("U"):
+            self.go_to_root_page()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -469,6 +471,11 @@ class Browser:
         """Go to the parent URL if possible."""
         if self.current_url:
             self.open_gemini_url(get_parent_url(self.current_url))
+
+    def go_to_root_page(self):
+        """Go to the root URL if possible."""
+        if self.current_url:
+            self.open_gemini_url(get_root_url(self.current_url))
 
     def open_web_url(self, url):
         """Open a Web URL. Currently relies in Python's webbrowser module."""
