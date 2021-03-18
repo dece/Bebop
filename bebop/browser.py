@@ -7,6 +7,7 @@ import os
 import webbrowser
 from math import inf
 
+from bebop.bookmarks import get_bookmarks_document, save_bookmark
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
 from bebop.history import History
@@ -30,9 +31,9 @@ class Browser:
         self.command_line = None
         self.running = True
         self.status_data = ("", 0, 0)
-        self.current_url = ""
         self.history = History()
         self.cache = {}
+        self._current_url = ""
 
     @property
     def h(self):
@@ -41,6 +42,17 @@ class Browser:
     @property
     def w(self):
         return self.dim[1]
+
+    @property
+    def current_url(self):
+        """Return the current URL."""
+        return self._current_url
+
+    @current_url.setter
+    def current_url(self, url):
+        """Set the current URL and show it in the status line."""
+        self._current_url = url
+        self.set_status(url)
 
     def run(self, *args, **kwargs):
         """Use curses' wrapper around _run."""
@@ -116,6 +128,10 @@ class Browser:
             self.go_to_parent_page()
         elif char == ord("U"):
             self.go_to_root_page()
+        elif char == ord("b"):
+            self.open_bookmarks()
+        elif char == ord("B"):
+            self.add_bookmark()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -126,7 +142,7 @@ class Browser:
             self.screen.nodelay(True)
             char = self.screen.getch()
             if char == -1:
-                self.set_status(self.current_url)
+                self.reset_status()
             else:  # ALT keybinds.
                 if char == ord("h"):
                     self.scroll_page_horizontally(-1)
@@ -181,6 +197,10 @@ class Browser:
         """Set a regular message in the status bar."""
         self.status_data = text, ColorPair.NORMAL, curses.A_ITALIC
         self.refresh_status_line()
+
+    def reset_status(self):
+        """Reset status line, e.g. after a cancelled action."""
+        self.set_status(self.current_url)
 
     def set_status_error(self, text):
         """Set an error message in the status bar."""
@@ -241,11 +261,15 @@ class Browser:
             # If there is no netloc, this is a relative URL.
             if join or base_url:
                 url = join_url(base_url or self.current_url, url)
-            self.open_gemini_url(sanitize_url(url), redirects)
+            self.open_gemini_url(sanitize_url(url), redirects=redirects,
+                                 history=history, use_cache=use_cache)
         elif parts.scheme.startswith("http"):
             self.open_web_url(url)
         elif parts.scheme == "file":
-            self.open_file(parts.path)
+            self.open_file(parts.path, history=history)
+        elif parts.scheme == "bebop":
+            if parts.netloc == "bookmarks":
+                self.open_bookmarks()
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
@@ -464,7 +488,7 @@ class Browser:
     def reload_page(self):
         """Reload the page, if one has been previously loaded."""
         if self.current_url:
-            self.open_gemini_url(
+            self.open_url(
                 self.current_url,
                 history=False,
                 use_cache=False
@@ -473,7 +497,7 @@ class Browser:
     def go_back(self):
         """Go back in history if possible."""
         if self.history.has_links():
-            self.open_gemini_url(self.history.pop(), history=False)
+            self.open_url(self.history.pop(), history=False)
 
     def go_to_parent_page(self):
         """Go to the parent URL if possible."""
@@ -490,7 +514,7 @@ class Browser:
         self.set_status(f"Opening {url}")
         webbrowser.open_new_tab(url)
 
-    def open_file(self, filepath, encoding="utf-8"):
+    def open_file(self, filepath, encoding="utf-8", history=True):
         """Open a file and render it.
 
         This should be used only on Gemtext files or at least text files.
@@ -505,3 +529,29 @@ class Browser:
             self.set_status_error(f"Failed to open file: {exc}")
             return
         self.load_page(Page.from_gemtext(text))
+        file_url = "file://" + filepath
+        if history:
+            self.history.push(file_url)
+        self.current_url = file_url
+
+    def open_bookmarks(self):
+        """Open bookmarks."""
+        content = get_bookmarks_document()
+        if content is None:
+            self.set_status_error("Failed to open bookmarks.")
+            return
+        self.load_page(Page.from_gemtext(content))
+        self.current_url = "bebop://bookmarks"
+
+    def add_bookmark(self):
+        """Add the current URL as bookmark."""
+        if not self.current_url:
+            return
+        self.set_status("Title?")
+        current_title = self.page_pad.current_page.title or ""
+        title = self.command_line.focus(">", prefix=current_title)
+        if title:
+            title = title.strip()
+            if title:
+                save_bookmark(self.current_url, title)
+        self.reset_status()
