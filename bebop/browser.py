@@ -13,7 +13,8 @@ from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
 from bebop.navigation import *
-from bebop.page import Page, PagePad
+from bebop.page import Page
+from bebop.page_pad import PagePad
 from bebop.protocol import Request, Response
 
 
@@ -208,7 +209,8 @@ class Browser:
         if command in ("o", "open"):
             self.open_url(words[1], assume_absolute=True)
 
-    def open_url(self, url, base_url=None, redirects=0, assume_absolute=False):
+    def open_url(self, url, base_url=None, redirects=0, assume_absolute=False,
+                 history=True, use_cache=True):
         """Try to open an URL.
 
         This function assumes that the URL can be from an user and thus tries a
@@ -223,6 +225,8 @@ class Browser:
         - base_url: an URL string to use as base in case `url` is relative.
         - redirections: number of redirections we did yet for the same request.
         - assume_absolute: assume we intended to use an absolute URL if True.
+        - history: whether the URL should be pushed to history on success.
+        - use_cache: whether we should look for an already cached document.
         """
         if redirects > 5:
             self.set_status_error(f"Too many redirections ({url}).")
