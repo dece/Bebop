@@ -1,5 +1,6 @@
 """History management."""
 
+
 class History:
     """Basic browsing history manager."""
 

@@ -6,8 +6,11 @@ module. A renderer can then completely abstract the original document.
 """
 
 import re
+from collections import namedtuple
 from dataclasses import dataclass
 from typing import List
+
+from bebop.links import Links
 
 
 @dataclass
@@ -26,6 +29,7 @@ class Title:
 class Link:
     url: str
     text: str
+    ident: int = 0
     RE = re.compile(r"=>\s*(?P<url>\S+)(\s+(?P<text>.+))?")
 
 
@@ -47,9 +51,15 @@ class ListItem:
     RE = re.compile(r"\*\s(.*)")
 
 
-def parse_gemtext(text: str):
+ParsedGemtext = namedtuple("ParsedGemtext", ("elements", "links", "title"))
+
+
+def parse_gemtext(text: str) -> ParsedGemtext:
     """Parse a string of Gemtext into a list of elements."""
     elements = []
+    links = Links
+    last_link_id = 0
+    title = ""
     preformatted = None
     for line in text.splitlines():
         line = line.rstrip()
@@ -59,14 +69,18 @@ def parse_gemtext(text: str):
         match = Title.RE.match(line)
         if match:
             hashtags, text = match.groups()
-            elements.append(Title(hashtags.count("#"), text))
+            level = hashtags.count("#")
+            elements.append(Title(level, text))
+            if not title and level == 1:
+                title = text
             continue
 
         match = Link.RE.match(line)
         if match:
             match_dict = match.groupdict()
             url, text = match_dict["url"], match_dict.get("text", "")
-            elements.append(Link(url, text))
+            last_link_id += 1
+            elements.append(Link(url, text, last_link_id))
             continue
 
         if line.startswith(Preformatted.FENCE):
@@ -99,4 +113,4 @@ def parse_gemtext(text: str):
     if preformatted:
         elements.append(preformatted)
 
-    return elements
+    return ParsedGemtext(elements, links, title)
