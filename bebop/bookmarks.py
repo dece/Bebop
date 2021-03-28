@@ -8,7 +8,7 @@ TEMPLATE = """\
 
 Welcome to your bookmark page! This file has been created in "{original_path}" \
 and you can edit it as you wish. New bookmarks will be added on a new \
-line at the end. Always keep an empty line at the end!
+line at the end, so always keep an empty line there!
 """
 
 
