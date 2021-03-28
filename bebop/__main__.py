@@ -1,6 +1,6 @@
 import argparse
 
-from bebop.browser import Browser
+from bebop.browser.browser import Browser
 from bebop.fs import get_user_data_path
 from bebop.tofu import load_cert_stash, save_cert_stash
 

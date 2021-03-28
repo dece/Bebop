@@ -98,15 +98,16 @@ def generate_metalines(elements, width):
 
 def format_title(title: Title, context: dict):
     """Return metalines for this title."""
+    width = context["width"]
     if title.level == 1:
-        wrapped = wrap_words(title.text, context["width"])
-        line_template = f"{{:^{context['width']}}}"
+        wrapped = wrap_words(title.text, width)
+        line_template = f"{{:^{width}}}"
         lines = (line_template.format(line) for line in wrapped)
     else:
         if title.level == 2:
-            lines = wrap_words(title.text, context["width"], indent=2)
+            lines = wrap_words(title.text, width, indent=2)
         else:
-            lines = wrap_words(title.text, context["width"])
+            lines = wrap_words(title.text, width)
     # Title levels match the type constants of titles.
     return [({"type": LineType(title.level)}, line) for line in lines]
 
