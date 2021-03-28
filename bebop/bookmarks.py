@@ -1,4 +1,3 @@
-import io
 from pathlib import Path
 
 from bebop.fs import get_user_data_path

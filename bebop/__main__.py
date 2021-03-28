@@ -20,7 +20,7 @@ def main():
         user_data_path.mkdir()
 
     cert_stash_path = user_data_path / "known_hosts.txt"
-    cert_stash = load_cert_stash(cert_stash_path)
+    cert_stash = load_cert_stash(cert_stash_path) or {}
     try:
         Browser(cert_stash).run(start_url=start_url)
     finally:
