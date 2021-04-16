@@ -94,6 +94,11 @@ def generate_metalines(elements, width):
     return metalines
 
 
+def generate_dumb_metalines(lines):
+    """Generate dumb metalines: all lines are given the PARAGRAPH line type."""
+    return [({"type": LineType.PARAGRAPH}, line) for line in lines]
+
+
 def format_title(title: Title, context: dict):
     """Return metalines for this title."""
     width = context["width"]

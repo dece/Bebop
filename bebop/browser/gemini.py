@@ -84,7 +84,9 @@ def handle_response_content(browser: Browser, response: Response) -> int:
     According to the MIME type received or inferred, render or download the
     response's content.
 
-    Currently only text/gemini content is rendered.
+    Currently only text content is rendered. For Gemini, the encoding specified
+    in the response is used, if available on the Python distribution. For other
+    text formats, only UTF-8 is attempted.
 
     Arguments:
     - response: a successful Response.
@@ -108,7 +110,9 @@ def handle_response_content(browser: Browser, response: Response) -> int:
             browser.load_page(Page.from_gemtext(text))
             return 0
         else:
-            pass  # TODO
+            text = response.content.decode("utf-8", errors="replace")
+            browser.load_page(Page.from_text(text))
+            return 0
     else:
         pass  # TODO
     return 1

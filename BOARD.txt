@@ -4,7 +4,7 @@ TODO                                    DONE
                                         links
                                         redirections
                                         web links
-                                        history
+                                        history (back/forward)
                                         simple caching
                                         simple text files
                                         encodings
@@ -14,6 +14,7 @@ non shit command-line
 home page
 downloads
 media files
+view history
 identity management
 configuration
 --------------------------------------------------------------------------------

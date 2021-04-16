@@ -18,7 +18,7 @@ def open_file(browser: Browser, filepath: str, encoding="utf-8", history=True):
     except (OSError, ValueError) as exc:
         browser.set_status_error(f"Failed to open file: {exc}")
         return
-    browser.load_page(Page.from_gemtext(text))
+    browser.load_page(Page.from_text(text))
     file_url = "file://" + filepath
     if history:
         browser.history.push(file_url)
