@@ -17,6 +17,7 @@ class Page:
       lookup and disambiguation.
     - title: optional page title.
     """
+    source: str
     metalines: list = field(default_factory=list)
     links: Links = field(default_factory=Links)
     title: str = ""
@@ -26,4 +27,4 @@ class Page:
         """Produce a Page from a Gemtext file or string."""
         elements, links, title = parse_gemtext(gemtext)
         metalines = generate_metalines(elements, 80)
-        return Page(metalines, links, title)
+        return Page(gemtext, metalines, links, title)

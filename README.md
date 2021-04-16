@@ -27,16 +27,16 @@ Features
 
 ### What works
 
-- Basic browsing: scrolling, follow links, redirections, Web links.
+Common basic browsing features work: go to URL, scrolling, follow links,
+redirections, page encoding.
 
-### What is planned
+Bebop also provide these neat features:
 
-- Handle more content types.
-- Great config options.
-- Identity management with temporary and managed certificates.
-- Buffers (or tabs if you prefer).
-- Home page.
-- Bookmarks.
+- History
+- Caching
+- Bookmarks: it's just a text file with bindings.
+
+Check out [this board](BOARD.txt) for what's done and coming next.
 
 ### What is not planned for now
 

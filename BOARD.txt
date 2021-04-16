@@ -1,0 +1,25 @@
+TODO                                    DONE
+--------------------------------------------------------------------------------
+                                        browsing
+                                        links
+                                        redirections
+                                        web links
+                                        history
+                                        simple caching
+                                        simple text files
+                                        encodings
+                                        bookmarks
+                                        view/edit sources
+non shit command-line
+home page
+downloads
+media files
+identity management
+configuration
+--------------------------------------------------------------------------------
+BACKLOG
+margins / centering
+pre blocks folding
+buffers (tabs)
+handle soft-hyphens on wrapping
+bug: combining chars reduce lengths

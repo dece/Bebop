@@ -4,9 +4,13 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
+import subprocess
+import tempfile
 from math import inf
 
-from bebop.bookmarks import get_bookmarks_document, save_bookmark
+from bebop.bookmarks import (
+    get_bookmarks_path, get_bookmarks_document, save_bookmark
+)
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
 from bebop.history import History
@@ -131,6 +135,8 @@ class Browser:
             self.open_bookmarks()
         elif char == ord("B"):
             self.add_bookmark()
+        elif char == ord("e"):
+            self.edit_page()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -421,3 +427,42 @@ class Browser:
             if title:
                 save_bookmark(self.current_url, title)
         self.reset_status()
+
+    def open_external_program(self, command):
+        """Pauses the curses modes to open an external program."""
+        curses.nocbreak()
+        curses.echo()
+        subprocess.run(command)
+        curses.noecho()
+        curses.cbreak()
+        self.refresh_windows()
+
+    def edit_page(self):
+        """Open a text editor to edit the page source.
+
+        For external pages, the source is written in a temporary file, opened in
+        its editor of choice and so it's up to the user to save it where she
+        needs it, if needed. Internal pages, e.g. the bookmarks page, are loaded
+        directly from their location on disk.
+        """
+        command = ["vi"]
+        delete_source_after = False
+
+        special_pages = {
+            "bebop://bookmarks": str(get_bookmarks_path())
+        }
+        if self.current_url in special_pages:
+            source_filename = special_pages[self.current_url]
+        else:
+            if not self.page_pad.current_page:
+                return
+            source = self.page_pad.current_page.source
+            with tempfile.NamedTemporaryFile("wt", delete=False) as source_file:
+                source_file.write(source)
+                source_filename = source_file.name
+            delete_source_after = True
+
+        command.append(source_filename)
+        self.open_external_program(command)
+        if delete_source_after:
+            os.unlink(source_filename)
