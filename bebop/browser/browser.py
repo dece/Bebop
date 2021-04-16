@@ -295,9 +295,11 @@ class Browser:
 
     def handle_digit_input(self, init_char: int):
         """Focus command-line to select the link ID to follow."""
-        if not self.page_pad or self.page_pad.current_page.links is None:
+        if self.page_pad.current_page is None:
             return
         links = self.page_pad.current_page.links
+        if links is None:
+            return
         err, val = self.command_line.focus_for_link_navigation(init_char, links)
         if err == 0:
             self.open_link(links, val)  # type: ignore
@@ -411,7 +413,7 @@ class Browser:
         """Add the current URL as bookmark."""
         if not self.current_url:
             return
-        self.set_status("Title?")
+        self.set_status("Bookmark title?")
         current_title = self.page_pad.current_page.title or ""
         title = self.command_line.focus(">", prefix=current_title)
         if title:

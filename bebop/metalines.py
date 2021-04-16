@@ -145,7 +145,7 @@ def format_preformatted(preformatted: Preformatted, context: dict):
 
 def format_blockquote(blockquote: Blockquote, context: dict):
     """Return metalines for this blockquote."""
-    lines = wrap_words(blockquote.text, context["width"])
+    lines = wrap_words(blockquote.text, context["width"], indent=2)
     return [({"type": LineType.BLOCKQUOTE}, line) for line in lines]
 
 

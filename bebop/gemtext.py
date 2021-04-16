@@ -57,7 +57,7 @@ ParsedGemtext = namedtuple("ParsedGemtext", ("elements", "links", "title"))
 def parse_gemtext(text: str) -> ParsedGemtext:
     """Parse a string of Gemtext into a list of elements."""
     elements = []
-    links = Links
+    links = Links()
     last_link_id = 0
     title = ""
     preformatted = None
@@ -80,6 +80,7 @@ def parse_gemtext(text: str) -> ParsedGemtext:
             match_dict = match.groupdict()
             url, text = match_dict["url"], match_dict.get("text", "")
             last_link_id += 1
+            links[last_link_id] = url
             elements.append(Link(url, text, last_link_id))
             continue
 

@@ -7,7 +7,7 @@ from bebop.tofu import load_cert_stash, save_cert_stash
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("url", default=None)
+    argparser.add_argument("url", nargs="?", default=None)
     args = argparser.parse_args()
 
     if args.url:
