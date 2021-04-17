@@ -3,12 +3,21 @@
 import curses
 import curses.ascii
 import curses.textpad
+import os
+import tempfile
 
+from bebop.external import open_external_program
 from bebop.links import Links
 
 
 class CommandLine:
-    """Basic and flaky command-line à la Vim, using curses module's Textbox."""
+    """Basic and flaky command-line à la Vim, using curses module's Textbox.
+
+    I don't understand how to get proper pad-like behaviour, e.g. to scroll past
+    the window's right border when writing more content than the width allows.
+    Therefore I just added the M-e keybind to call an external editor and use
+    its content as result.
+    """
 
     def __init__(self, window):
         self.window = window
@@ -78,6 +87,9 @@ class CommandLine:
             ch = self.window.getch()
             if ch == -1:
                 raise EscapeCommandInterrupt()
+            else:  # ALT keybinds.
+                if ch == ord("e"):
+                    self.open_editor(self.gather())
             self.window.nodelay(False)
         return ch
 
@@ -150,6 +162,27 @@ class CommandLine:
             return 0
         # Everything else could be a control character and should be processed.
         return ch
+
+    def open_editor(self, existing_content=None):
+        """Open an external editor and raise termination interrupt."""
+        try:
+            with tempfile.NamedTemporaryFile("w+t", delete=False) as temp_file:
+                if existing_content:
+                    temp_file.write(existing_content)
+                temp_filepath = temp_file.name
+        except OSError:
+            return
+
+        command = ["vi", temp_filepath]
+        open_external_program(command)
+
+        try:
+            with open(temp_filepath, "rt") as temp_file:
+                content = temp_file.read()
+            os.unlink(temp_filepath)
+        except OSError:
+            return
+        raise TerminateCommandInterrupt(content)
 
 
 class EscapeCommandInterrupt(Exception):

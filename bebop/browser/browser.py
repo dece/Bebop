@@ -4,7 +4,6 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
-import subprocess
 import tempfile
 from math import inf
 
@@ -13,6 +12,7 @@ from bebop.bookmarks import (
 )
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
+from bebop.external import open_external_program
 from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
@@ -428,15 +428,6 @@ class Browser:
                 save_bookmark(self.current_url, title)
         self.reset_status()
 
-    def open_external_program(self, command):
-        """Pauses the curses modes to open an external program."""
-        curses.nocbreak()
-        curses.echo()
-        subprocess.run(command)
-        curses.noecho()
-        curses.cbreak()
-        self.refresh_windows()
-
     def edit_page(self):
         """Open a text editor to edit the page source.
 
@@ -463,6 +454,7 @@ class Browser:
             delete_source_after = True
 
         command.append(source_filename)
-        self.open_external_program(command)
+        open_external_program(command)
         if delete_source_after:
             os.unlink(source_filename)
+        self.refresh_windows()
