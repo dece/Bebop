@@ -1,7 +1,5 @@
 """Links manager."""
 
-from typing import List
-
 
 class Links(dict):
 

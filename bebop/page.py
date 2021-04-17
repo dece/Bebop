@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from bebop.gemtext import parse_gemtext, Title
+from bebop.gemtext import parse_gemtext
 from bebop.metalines import generate_dumb_metalines, generate_metalines
 from bebop.links import Links
 
