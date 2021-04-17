@@ -53,11 +53,11 @@ def set_parameter(url: str, user_input: str):
 
 def get_parent_url(url: str) -> str:
     """Return the parent URL (one level up)."""
-    scheme, netloc, path, params, query, frag = parse_url(url)
+    scheme, netloc, path, _, _, _ = parse_url(url)
     last_slash = path.rstrip("/").rfind("/")
     if last_slash > -1:
         path = path[:last_slash + 1]
-    return urllib.parse.urlunparse((scheme, netloc, path, params, query, frag))
+    return urllib.parse.urlunparse((scheme, netloc, path, "", "", ""))
 
 
 def get_root_url(url: str) -> str:
