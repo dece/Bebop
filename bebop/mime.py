@@ -14,6 +14,10 @@ class MimeType:
     parameters: dict
 
     @property
+    def short(self):
+        return f"{self.main_type or '*'}/{self.sub_type or '*'}"
+
+    @property
     def charset(self):
         return self.parameters.get("charset", DEFAULT_CHARSET)
 

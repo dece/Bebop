@@ -18,7 +18,7 @@ def render_lines(metalines, window, max_width):
     - window: window that will be resized as filled with rendered lines.
     - max_width: line length limit for the pad.
 
-    Return:
+    Returns:
     The tuple of integers (error, height, width), error being a non-zero value
     if an error occured during rendering, and height and width being the new
     dimensions of the resized window.
@@ -53,7 +53,7 @@ def render_line(metaline, window, max_width):
         window.addstr(url_text, attributes)
 
 
-def get_base_line_attributes(line_type):
+def get_base_line_attributes(line_type) -> int:
     """Return the base attributes for this line type.
 
     Other attributes may be freely used later for this line type but this is

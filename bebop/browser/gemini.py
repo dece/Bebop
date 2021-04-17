@@ -1,6 +1,9 @@
 """Gemini-related features of the browser."""
 
+from pathlib import Path
+
 from bebop.browser.browser import Browser
+from bebop.fs import get_downloads_path
 from bebop.navigation import set_parameter
 from bebop.page import Page
 from bebop.protocol import Request, Response
@@ -55,17 +58,10 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
     if not response:
         browser.set_status_error(f"Server response parsing failed ({url}).")
         return
+    response.url = url
 
     if response.code == 20:
-        handle_code = handle_response_content(browser, response)
-        if handle_code == 0:
-            if browser.current_url and history:
-                browser.history.push(browser.current_url)
-            browser.current_url = url
-            browser.cache[url] = browser.page_pad.current_page
-            browser.set_status(url)
-        elif handle_code == 1:
-            browser.set_status(f"Downloaded {url}.")
+        handle_response_content(browser, url, response, history)
     elif response.generic_code == 30 and response.meta:
         browser.open_url(response.meta, base_url=url, redirects=redirects + 1)
     elif response.generic_code in (40, 50):
@@ -78,44 +74,72 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         browser.set_status_error(error)
 
 
-def handle_response_content(browser: Browser, response: Response) -> int:
-    """Handle a response's content from a Gemini server.
+def handle_response_content(browser: Browser, url: str, response: Response,
+                            history: bool):
+    """Handle a successful response content from a Gemini server.
 
-    According to the MIME type received or inferred, render or download the
-    response's content.
+    According to the MIME type received or inferred, the response is either
+    rendered by the browser, or saved to disk. If an error occurs, the browser
+    displays it.
 
-    Currently only text content is rendered. For Gemini, the encoding specified
-    in the response is used, if available on the Python distribution. For other
-    text formats, only UTF-8 is attempted.
+    Only text content is rendered. For Gemini, the encoding specified in the
+    response is used, if available on the Python distribution. For other text
+    formats, only UTF-8 is attempted.
 
     Arguments:
+    - browser: Browser instance that made the initial request.
+    - url: original URL.
     - response: a successful Response.
-
-    Returns:
-    An error code: 0 means a page has been loaded, so any book-keeping such
-    as history management can be applied; 1 means a content has been
-    successfully retrieved but has not been displayed (e.g. non-text
-    content) nor saved as a page; 2 means that the content could not be
-    handled, either due to bogus MIME type or MIME parameters.
+    - history: whether to modify history on a page load.
     """
     mime_type = response.get_mime_type()
+    page = None
+    error = None
+    filepath = None
     if mime_type.main_type == "text":
         if mime_type.sub_type == "gemini":
             encoding = mime_type.charset
             try:
                 text = response.content.decode(encoding, errors="replace")
             except LookupError:
-                browser.set_status_error("Unknown encoding {encoding}.")
-                return 2
-            browser.load_page(Page.from_gemtext(text))
-            return 0
+                error = f"Unknown encoding {encoding}."
+            else:
+                page = Page.from_gemtext(text)
         else:
             text = response.content.decode("utf-8", errors="replace")
-            browser.load_page(Page.from_text(text))
-            return 0
+            page = Page.from_text(text)
     else:
-        pass  # TODO
-    return 1
+        filepath = get_download_path(url)
+
+    if page:
+        browser.load_page(page)
+        if browser.current_url and history:
+            browser.history.push(browser.current_url)
+        browser.current_url = url
+        browser.cache[url] = page
+        browser.set_status(url)
+    elif filepath:
+        try:
+            with open(filepath, "wb") as download_file:
+                download_file.write(response.content)
+        except OSError as exc:
+            browser.set_status_error(f"Failed to save {url} ({exc})")
+        else:
+            browser.set_status(f"Downloaded {url} ({mime_type.short}).")
+    elif error:
+        browser.set_status_error(error)
+
+
+def get_download_path(url: str) -> Path:
+    """Try to find the best download file path possible from this URL."""
+    download_dir = get_downloads_path()
+    url_parts = url.rsplit("/", maxsplit=1)
+    if url_parts:
+        filename = url_parts[-1]
+    else:
+        filename = url.split("://")[1] if "://" in url else url
+        filename = filename.replace("/", "_")
+    return download_dir / filename
 
 
 def handle_input_request(browser: Browser, from_url: str, message: str =None):

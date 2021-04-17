@@ -10,15 +10,17 @@ TODO                                    DONE
                                         encodings
                                         bookmarks
                                         view/edit sources
+                                        downloads
+open last download
 non shit command-line
 home page
-downloads
 media files
 view history
 identity management
 configuration
 --------------------------------------------------------------------------------
 BACKLOG
+download to disk, not in memory
 margins / centering
 pre blocks folding
 buffers (tabs)

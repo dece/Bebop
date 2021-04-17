@@ -182,7 +182,16 @@ class StatusCode(IntEnum):
 
 @dataclass
 class Response:
-    """A Gemini response."""
+    """A Gemini response.
+
+    Response objects can be created only by parsing a Gemini response using the
+    static `parse` method, so you're guaranteed to have a valid object.
+
+    Attributes:
+    - code: the status code returned by the server.
+    - meta: optional meta content.
+    - content: bytes as returned by the server, only in successful requests.
+    """
 
     code: StatusCode
     meta: str = ""
