@@ -9,12 +9,19 @@ from bebop.page import Page
 from bebop.protocol import Request, Response
 
 
+MAX_URL_LEN = 1024
+
+
 def open_gemini_url(browser: Browser, url, redirects=0, history=True,
                     use_cache=True):
     """Open a Gemini URL and set the formatted response as content.
 
     After initiating the connection, TODO
     """
+    if len(url) >= MAX_URL_LEN:
+        browser.set_status_error(f"Request URL too long.")
+        return
+
     browser.set_status(f"Loading {url}")
 
     if use_cache and url in browser.cache:
@@ -58,7 +65,6 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
     if not response:
         browser.set_status_error(f"Server response parsing failed ({url}).")
         return
-    response.url = url
 
     if response.code == 20:
         handle_response_content(browser, url, response, history)
@@ -149,6 +155,7 @@ def handle_input_request(browser: Browser, from_url: str, message: str =None):
     else:
         browser.set_status("Input needed:")
     user_input = browser.command_line.focus("?")
-    if user_input:
-        url = set_parameter(from_url, user_input)
-        open_gemini_url(browser, url)
+    if not user_input:
+        return
+    url = set_parameter(from_url, user_input)
+    open_gemini_url(browser, url)
