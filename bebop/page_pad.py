@@ -98,3 +98,10 @@ class PagePad:
             self.current_line = max_line
             return True
         return False
+
+    def go_to_first_column(self):
+        """Move to the first column; return True if a refresh is needed."""
+        if self.current_column:
+            self.current_column = 0
+            return True
+        return False

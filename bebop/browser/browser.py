@@ -102,7 +102,7 @@ class Browser:
         elif char == ord("h"):
             self.scroll_page_horizontally(-3)
         elif char == ord("H"):
-            pass  # TODO h-scroll whole page left
+            self.scroll_whole_page_left()
         elif char == ord("j"):
             self.scroll_page_vertically(3)
         elif char == ord("J"):
@@ -114,9 +114,9 @@ class Browser:
         elif char == ord("l"):
             self.scroll_page_horizontally(3)
         elif char == ord("L"):
-            pass  # TODO h-scroll whole page right
+            self.scroll_whole_page_right()
         elif char == ord("^"):
-            pass # TODO reset horizontal scrolling
+            self.scroll_page_horizontally(-inf)
         elif char == ord("g"):
             char = self.screen.getch()
             if char == ord("g"):
@@ -382,9 +382,26 @@ class Browser:
         self.scroll_page_vertically(-self.page_pad_size[0])
 
     def scroll_page_horizontally(self, by_columns):
-        """Scroll page horizontally."""
-        if self.page_pad.scroll_h(by_columns, self.w):
+        """Scroll page horizontally.
+
+        If `by_lines` is an integer (positive or negative), scroll the page by
+        this amount of columns. If `by_lines` is -inf, scroll back to the first
+        column. Scrolling to the right-most column is not supported.
+        """
+        if by_columns == -inf:
+            require_refresh = self.page_pad.go_to_first_column()
+        else:
+            require_refresh = self.page_pad.scroll_h(by_columns, self.w)
+        if require_refresh:
             self.refresh_page()
+
+    def scroll_whole_page_left(self):
+        """Scroll left by a whole page."""
+        self.scroll_page_horizontally(-self.page_pad_size[1])
+
+    def scroll_whole_page_right(self):
+        """Scroll right by a whole page."""
+        self.scroll_page_horizontally(self.page_pad_size[1])
 
     def reload_page(self):
         """Reload the page, if one has been previously loaded."""
