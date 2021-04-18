@@ -174,12 +174,12 @@ class CommandLine:
         except OSError:
             return
 
-        command = ["vi", temp_filepath]
+        command = self.editor_command + [temp_filepath]
         open_external_program(command)
 
         try:
             with open(temp_filepath, "rt") as temp_file:
-                content = temp_file.read()
+                content = temp_file.read().rstrip("\r\n")
             os.unlink(temp_filepath)
         except OSError:
             return
