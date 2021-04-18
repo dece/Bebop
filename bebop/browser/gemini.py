@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from bebop.browser.browser import Browser
+from bebop.command_line import CommandLine
 from bebop.fs import get_downloads_path
 from bebop.navigation import set_parameter
 from bebop.page import Page
@@ -42,7 +43,7 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
             error = f"Certificate has been changed ({url})."
             # TODO propose the user ways to handle this.
         elif req.state == Request.STATE_CONNECTION_FAILED:
-            error_details = f": {req.error}" if req.error else "."
+            error_details = ": " + req.error if req.error else "."
             error = f"Connection failed ({url})" + error_details
         else:
             error = f"Connection failed ({url})."
@@ -67,22 +68,28 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         browser.set_status_error(f"Server response parsing failed ({url}).")
         return
 
+    _handle_response(browser, response, url, redirects, history)
+
+
+def _handle_response(browser: Browser, response: Response, url: str,
+                     redirects: int, history: bool):
+    """Handle a response from a Gemini server."""
     if response.code == 20:
-        handle_response_content(browser, url, response, history)
+        _handle_successful_response(browser, response, url, history)
     elif response.generic_code == 30 and response.meta:
         browser.open_url(response.meta, base_url=url, redirects=redirects + 1)
     elif response.generic_code in (40, 50):
         error = f"Server error: {response.meta or Response.code.name}"
         browser.set_status_error(error)
     elif response.generic_code == 10:
-        handle_input_request(browser, url, response.meta)
+        _handle_input_request(browser, url, response.meta)
     else:
         error = f"Unhandled response code {response.code}"
         browser.set_status_error(error)
 
 
-def handle_response_content(browser: Browser, url: str, response: Response,
-                            history: bool):
+def _handle_successful_response(browser: Browser, response: Response, url: str,
+                                history: bool):
     """Handle a successful response content from a Gemini server.
 
     According to the MIME type received or inferred, the response is either
@@ -116,7 +123,7 @@ def handle_response_content(browser: Browser, url: str, response: Response,
             text = response.content.decode("utf-8", errors="replace")
             page = Page.from_text(text)
     else:
-        filepath = get_download_path(url)
+        filepath = _get_download_path(url)
 
     if page:
         browser.load_page(page)
@@ -137,7 +144,7 @@ def handle_response_content(browser: Browser, url: str, response: Response,
         browser.set_status_error(error)
 
 
-def get_download_path(url: str) -> Path:
+def _get_download_path(url: str) -> Path:
     """Try to find the best download file path possible from this URL."""
     download_dir = get_downloads_path()
     url_parts = url.rsplit("/", maxsplit=1)
@@ -149,13 +156,13 @@ def get_download_path(url: str) -> Path:
     return download_dir / filename
 
 
-def handle_input_request(browser: Browser, from_url: str, message: str =None):
+def _handle_input_request(browser: Browser, from_url: str, message: str =None):
     """Focus command-line to pass input to the server."""
     if message:
         browser.set_status(f"Input needed: {message}")
     else:
         browser.set_status("Input needed:")
-    user_input = browser.command_line.focus("?")
+    user_input = browser.command_line.focus(CommandLine.CHAR_TEXT)
     if not user_input:
         return
     url = set_parameter(from_url, user_input)

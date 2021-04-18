@@ -253,11 +253,11 @@ class Browser:
 
     def quick_command(self, command):
         """Shortcut method to take user input with a prefixed command string."""
-        prefix = f"{command} " if command else ""
-        user_input = self.command_line.focus(":", prefix=prefix)
-        if not user_input:
+        prefix = command + " " if command else ""
+        text = self.command_line.focus(CommandLine.CHAR_COMMAND, prefix=prefix)
+        if not text:
             return
-        self.process_command(user_input)
+        self.process_command(text)
 
     def process_command(self, command_text: str):
         """Handle a client command."""
@@ -480,7 +480,10 @@ class Browser:
             return
         self.set_status("Bookmark title?")
         current_title = self.page_pad.current_page.title or ""
-        title = self.command_line.focus(">", prefix=current_title)
+        title = self.command_line.focus(
+            CommandLine.CHAR_TEXT,
+            prefix=current_title
+        )
         if title:
             title = title.strip()
             if title:
@@ -525,3 +528,8 @@ class Browser:
         """Show the help page."""
         self.load_page(Page.from_gemtext(HELP_PAGE, self.config["text_width"]))
         self.current_url = "bebop://help"
+
+    def prompt(self, text, keys):
+        """Display the text and allow it to type one of the given keys."""
+        self.set_status(text)
+        return self.command_line.prompt_key(keys)

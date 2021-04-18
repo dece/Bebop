@@ -17,17 +17,34 @@ class CommandLine:
     the window's right border when writing more content than the width allows.
     Therefore I just added the M-e keybind to call an external editor and use
     its content as result.
+
+    Attributes:
+    - window: curses window to use for the command line and Textbox.
+    - editor_command: external command to use to edit content externally.
+    - textbox: Textbox object handling user input.
     """
+
+    CHAR_COMMAND = ":"
+    CHAR_DIGIT = "&"
+    CHAR_TEXT = ">"
 
     def __init__(self, window, editor_command):
         self.window = window
         self.editor_command = editor_command
-        self.textbox = None
+        self.textbox = curses.textpad.Textbox(self.window)
 
     def clear(self):
         """Clear command-line contents."""
         self.window.clear()
         self.window.refresh()
+
+    def gather(self):
+        """Return the string currently written by the user in command line.
+
+        This doesn't count the command char used, but it includes then prefix.
+        Trailing whitespace is trimmed.
+        """
+        return self.textbox.gather()[1:].rstrip()
 
     def focus(self, command_char, validator=None, prefix=""):
         """Give user focus to the command bar.
@@ -46,13 +63,13 @@ class CommandLine:
         User input as string. The string will be empty if the validator raised
         an EscapeInterrupt.
         """
+        validator = validator or self._validate_common_input
         self.window.clear()
         self.window.refresh()
-        self.textbox = curses.textpad.Textbox(self.window)
         self.window.addstr(command_char + prefix)
         curses.curs_set(1)
         try:
-            command = self.textbox.edit(validator or self.validate_common_input)
+            command = self.textbox.edit(validator)
         except EscapeCommandInterrupt:
             command = ""
         except TerminateCommandInterrupt as exc:
@@ -63,11 +80,7 @@ class CommandLine:
         self.clear()
         return command
 
-    def gather(self):
-        """Return the string currently written by the user in command line."""
-        return self.textbox.gather()[1:].rstrip()
-
-    def validate_common_input(self, ch: int):
+    def _validate_common_input(self, ch: int):
         """Generic input validator, handles a few more cases than default.
 
         This validator can be used as a default validator as it handles, on top
@@ -136,8 +149,8 @@ class CommandLine:
         if len(candidates) == 1:
             return 0, candidates[0]
         # Else, focus the command line to let the user input more digits.
-        validator = lambda ch: self.validate_link_digit(ch, links, max_digits)
-        link_input = self.focus("&", validator, digit)
+        validator = lambda ch: self._validate_link_digit(ch, links, max_digits)
+        link_input = self.focus(CommandLine.CHAR_DIGIT, validator, digit)
         if not link_input:
             return 1, None
         try:
@@ -146,10 +159,10 @@ class CommandLine:
             return 2, f"Invalid link ID {link_input}."
         return 0, link_id
 
-    def validate_link_digit(self, ch: int, links: Links, max_digits: int):
+    def _validate_link_digit(self, ch: int, links: Links, max_digits: int):
         """Handle input chars to be used as link ID."""
         # Handle common chars.
-        ch = self.validate_common_input(ch)
+        ch = self._validate_common_input(ch)
         # Only accept digits. If we reach the amount of required digits, open
         # link now and leave command line. Else just process it.
         if curses.ascii.isdigit(ch):
@@ -184,6 +197,21 @@ class CommandLine:
         except OSError:
             return
         raise TerminateCommandInterrupt(content)
+
+    def prompt_key(self, keys):
+        """Focus the command line and wait for the user """
+        validator = lambda ch: self._validate_prompt(ch, keys)
+        key = self.focus(CommandLine.CHAR_TEXT, validator)
+        return key if key in keys else ""
+
+    def _validate_prompt(self, ch: int, keys):
+        """Handle input chars and raise a terminate interrupt on a valid key."""
+        # Handle common keys.
+        ch = self._validate_common_input(ch)
+        char = chr(ch)
+        if char in keys:
+            raise TerminateCommandInterrupt(char)
+        return 0
 
 
 class EscapeCommandInterrupt(Exception):
