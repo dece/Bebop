@@ -61,7 +61,7 @@ class Request:
         self.cert_status = None
         self.error = ""
 
-    def connect(self):
+    def connect(self, timeout):
         """Connect to a Gemini server and return a RequestEventType.
 
         Return True if the connection is established. The caller has to verify
@@ -95,7 +95,7 @@ class Request:
         self.payload += LINE_TERM
 
         try:
-            sock = socket.create_connection((hostname, port), timeout=10)
+            sock = socket.create_connection((hostname, port), timeout=timeout)
         except OSError as exc:
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror

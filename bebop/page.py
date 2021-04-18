@@ -24,10 +24,10 @@ class Page:
     title: str = ""
 
     @staticmethod
-    def from_gemtext(gemtext: str):
+    def from_gemtext(gemtext: str, wrap_at: int):
         """Produce a Page from a Gemtext file or string."""
         elements, links, title = parse_gemtext(gemtext)
-        metalines = generate_metalines(elements, 80)
+        metalines = generate_metalines(elements, wrap_at)
         return Page(gemtext, metalines, links, title)
 
     @staticmethod

@@ -33,7 +33,8 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         return
 
     req = Request(url, browser.stash)
-    connected = req.connect()
+    connect_timeout = browser.config["connect_timeout"]
+    connected = req.connect(connect_timeout)
     if not connected:
         if req.state == Request.STATE_ERROR_CERT:
             error = f"Certificate was missing or corrupt ({url})."
@@ -110,7 +111,7 @@ def handle_response_content(browser: Browser, url: str, response: Response,
             except LookupError:
                 error = f"Unknown encoding {encoding}."
             else:
-                page = Page.from_gemtext(text)
+                page = Page.from_gemtext(text, browser.config["text_width"])
         else:
             text = response.content.decode("utf-8", errors="replace")
             page = Page.from_text(text)

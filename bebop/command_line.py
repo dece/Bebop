@@ -19,8 +19,9 @@ class CommandLine:
     its content as result.
     """
 
-    def __init__(self, window):
+    def __init__(self, window, editor_command):
         self.window = window
+        self.editor_command = editor_command
         self.textbox = None
 
     def clear(self):

@@ -14,6 +14,13 @@ APP_NAME = "bebop"
 
 
 @lru_cache(None)
+def get_config_path() -> Path:
+    """Return the user config file path."""
+    config_dir = Path(getenv("XDG_CONFIG_HOME", expanduser("~/.config")))
+    return config_dir / (APP_NAME + ".json")
+
+
+@lru_cache(None)
 def get_user_data_path() -> Path:
     """Return the user data directory path."""
     path = Path(getenv("XDG_DATA_HOME", expanduser("~/.local/share")))

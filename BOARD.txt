@@ -11,18 +11,22 @@ TODO                                    DONE
                                         bookmarks
                                         view/edit sources
                                         downloads
+                                        configuration
 open last download
-non shit command-line
+actual TOFU
 home page
 media files
 view history
 identity management
-configuration
+help page for keybinds
 --------------------------------------------------------------------------------
 BACKLOG
+click on links to open them
 download to disk, not in memory
+does encoding really work? cf. egsam
 margins / centering
 pre blocks folding
 buffers (tabs)
 handle soft-hyphens on wrapping
 bug: combining chars reduce lengths
+non shit command-line

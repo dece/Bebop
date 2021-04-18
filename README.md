@@ -25,21 +25,85 @@ It passes the Conman's client test but not Egsam's for now.
 Features
 --------
 
-### What works
+Why use Bebop instead of something else?
 
-Common basic browsing features work: go to URL, scrolling, follow links,
-redirections, page encoding.
+### Lightweight
 
-Bebop also provide these neat features:
+It only uses a single dependency, [asn1crypto][asn1crypto], to delegate
+parsing certificates. Everything else including NCurses or TLS is done using
+Python's standard library.
+
+[asn1crypto]: https://github.com/wbond/asn1crypto
+
+### Fun
+
+Link navigation is done by entering the link ID with automatic validation: if
+there are less than 10 links on a page, pressing the link ID will take you to
+the page directly. If there are 30 links, pressing "1" will wait for another
+digit. If there are 1000 links but you wish to visit link #5, pressing 5 and
+enter will do!
+
+Of course this is based on my own perception of what exactly makes a client
+"fun" to use, but give it a shot!
+
+### And more!
+
+It does not try to do many things. Common basic browsing features work: go to
+URL, scrolling, follow links, redirections, page encodings, etc.
+
+It also provide these features:
 
 - History
 - Caching
 - Bookmarks: it's just a text file with bindings.
+- Downloads
 
 Check out [this board](BOARD.txt) for what's done and coming next.
 
-### What is not planned for now
 
-- 256-colors mode and themes.
-- Subscriptions. I have no need for them as I prefer to use a browser-agnostic
-    aggregator at the moment.
+
+Configuration
+-------------
+
+Bebop uses a JSON file (usually in `~/.config`). It is created with default
+values on first start. It is never written to afterwards: you can edit it when
+you want, just restart Bebop to take changes into account.
+
+Here are the available options:
+
+| Key               | Type        | Default  | Description                           |
+|-------------------|-------------|----------|---------------------------------------|
+| `connect_timeout` | int         | 10       | Seconds before connection times out.  |
+| `text_width`      | int         | 80       | Rendered line length.                 |
+| `source_editor`   | string list | `["vi"]` | Command to use for editing sources.   |
+| `command_editor`  | string list | `["vi"]` | Command to use for editing CLI input. |
+
+Note: for the "command" parameters such as `source_editor` and `command_editor`,
+a string list is used to separate the different program arguments, e.g. if you
+wish to use `vim -c 'startinsert'`, you should write the list `["vim", "-c",
+"startinsert"]`. In both case, a temporary or regular file name will be appended
+to this command when run.
+
+
+
+FAQ
+---
+
+### Can I change the colors?
+
+I do not plan to allow modifying the colors or elements style for now. Configure
+a nice palette for your terminal so that Bebop fits nicely in there!
+
+### Will Bebop implement subscriptions?
+
+I have no need for them as I prefer to use a browser-agnostic aggregator at the
+moment, so no.
+
+### WTF is wrong with the command line?
+
+I don't understand how you're supposed to create a fine input field in pure
+curses without the form extension library, which is not available from Python.
+Or, I think I understand but it's way too hard for the limited time I have to
+work on Bebop. So the command line is based on the very limited Textbox class;
+it's fine for entering a simple URL or a bookmark title but if you need to type
+more than the window's width, press `M-e` (ALT + e) to open an editor.

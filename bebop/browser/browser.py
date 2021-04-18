@@ -25,7 +25,8 @@ from bebop.page_pad import PagePad
 class Browser:
     """Manage the events, inputs and rendering."""
 
-    def __init__(self, cert_stash):
+    def __init__(self, config, cert_stash):
+        self.config = config
         self.stash = cert_stash or {}
         self.screen = None
         self.dim = (0, 0)
@@ -82,7 +83,10 @@ class Browser:
             *self.line_dim,
             *self.command_line_pos,
         )
-        self.command_line = CommandLine(command_line_window)
+        self.command_line = CommandLine(
+            command_line_window,
+            self.config["command_editor"]
+        )
 
         if start_url:
             self.open_url(start_url, assume_absolute=True)
@@ -429,7 +433,7 @@ class Browser:
         if content is None:
             self.set_status_error("Failed to open bookmarks.")
             return
-        self.load_page(Page.from_gemtext(content))
+        self.load_page(Page.from_gemtext(content, self.config["text_width"]))
         self.current_url = "bebop://bookmarks"
 
     def add_bookmark(self):
@@ -453,9 +457,7 @@ class Browser:
         needs it, if needed. Internal pages, e.g. the bookmarks page, are loaded
         directly from their location on disk.
         """
-        command = ["vi"]
         delete_source_after = False
-
         special_pages = {
             "bebop://bookmarks": str(get_bookmarks_path())
         }
@@ -470,7 +472,7 @@ class Browser:
                 source_filename = source_file.name
             delete_source_after = True
 
-        command.append(source_filename)
+        command = self.config["source_editor"] + [source_filename]
         open_external_program(command)
         if delete_source_after:
             os.unlink(source_filename)
