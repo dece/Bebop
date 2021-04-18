@@ -13,6 +13,7 @@ from bebop.bookmarks import (
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
+from bebop.help import HELP_PAGE
 from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
@@ -23,7 +24,26 @@ from bebop.page_pad import PagePad
 
 
 class Browser:
-    """Manage the events, inputs and rendering."""
+    """Manage the events, inputs and rendering.
+
+    Attributes:
+    - config: config dict passed to the browser.
+    - stash: certificate stash passed to the browser.
+    - screen: curses stdscr.
+    - dim: current screen dimensions.
+    - page_pad: curses pad containing the current page view.
+    - status_line: curses window used to report current status.
+    - command_line: a CommandLine object for the user to interact with.
+    - running: the browser will continue running while this is true.
+    - status_data: 3-uple of status text, color pair and attributes of the
+      status line, used to reset status after an error.
+    - history: an History object.
+    - cache: a dict containing cached pages
+    - special_pages: a dict containing page names used with "bebop" scheme;
+      values are dicts as well: the "open" key maps to a callable to use when
+      the page is accessed, and the optional "source" key maps to callable
+      returning the page source path.
+    """
 
     def __init__(self, config, cert_stash):
         self.config = config
@@ -37,6 +57,7 @@ class Browser:
         self.status_data = ("", 0, 0)
         self.history = History()
         self.cache = {}
+        self.special_pages = self.setup_special_pages()
         self._current_url = ""
 
     @property
@@ -57,6 +78,18 @@ class Browser:
         """Set the current URL and show it in the status line."""
         self._current_url = url
         self.set_status(url)
+
+    def setup_special_pages(self):
+        """Return a dict with the special pages functions."""
+        return {
+            "bookmarks": {
+                "open": self.open_bookmarks,
+                "source": lambda: str(get_bookmarks_path())
+            },
+            "help": {
+                "open": self.open_help,
+            },
+        }
 
     def run(self, *args, **kwargs):
         """Use curses' wrapper around _run."""
@@ -99,7 +132,9 @@ class Browser:
 
     def handle_inputs(self):
         char = self.screen.getch()
-        if char == ord(":"):
+        if char == ord("?"):
+            self.open_help()
+        elif char == ord(":"):
             self.quick_command("")
         elif char == ord("r"):
             self.reload_page()
@@ -287,8 +322,11 @@ class Browser:
             from bebop.browser.file import open_file
             open_file(self, parts.path, history=history)
         elif parts.scheme == "bebop":
-            if parts.netloc == "bookmarks":
-                self.open_bookmarks()
+            special_page = self.special_pages.get(parts.netloc)
+            if special_page:
+                special_page["open"]()
+            else:
+                self.set_status_error("Unknown page.")
         else:
             self.set_status_error(f"Protocol {parts.scheme} not supported.")
 
@@ -458,11 +496,13 @@ class Browser:
         directly from their location on disk.
         """
         delete_source_after = False
-        special_pages = {
-            "bebop://bookmarks": str(get_bookmarks_path())
-        }
-        if self.current_url in special_pages:
-            source_filename = special_pages[self.current_url]
+        if self.current_url.startswith("bebop://"):
+            page_name = self.current_url[len("bebop://"):]
+            special_pages_functions = self.special_pages.get(page_name)
+            if not special_pages_functions:
+                return
+            get_source = special_pages_functions.get("source")
+            source_filename = get_source() if get_source else None
         else:
             if not self.page_pad.current_page:
                 return
@@ -472,8 +512,16 @@ class Browser:
                 source_filename = source_file.name
             delete_source_after = True
 
+        if not source_filename:
+            return
+
         command = self.config["source_editor"] + [source_filename]
         open_external_program(command)
         if delete_source_after:
             os.unlink(source_filename)
         self.refresh_windows()
+
+    def open_help(self):
+        """Show the help page."""
+        self.load_page(Page.from_gemtext(HELP_PAGE, self.config["text_width"]))
+        self.current_url = "bebop://help"

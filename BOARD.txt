@@ -12,6 +12,7 @@ TODO                                    DONE
                                         view/edit sources
                                         downloads
                                         configuration
+                                        help page
 open last download
 actual TOFU
 home page

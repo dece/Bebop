@@ -35,6 +35,10 @@ Python's standard library.
 
 [asn1crypto]: https://github.com/wbond/asn1crypto
 
+### Nice keybinds
+
+A lot of keybinds are defined. Find them in the help page by pressing `?`.
+
 ### Fun
 
 Link navigation is done by entering the link ID with automatic validation: if
