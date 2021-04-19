@@ -29,15 +29,13 @@ Why use Bebop instead of something else?
 
 ### Lightweight
 
-It only uses a single dependency, [asn1crypto][asn1crypto], to delegate
-parsing certificates. Everything else including NCurses or TLS is done using
-Python's standard library.
-
-[asn1crypto]: https://github.com/wbond/asn1crypto
+It does not use any external dependencies. Everything including NCurses or TLS
+is done using Python's standard library.
 
 ### Nice keybinds
 
-A lot of keybinds are defined. Find them in the help page by pressing `?`.
+A lot of keybinds are defined, and Vim users should get quickly familiar with
+them. Find them in the help page by pressing `?`.
 
 ### Fun
 

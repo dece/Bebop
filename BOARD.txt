@@ -13,13 +13,12 @@ TODO                                    DONE
                                         downloads
                                         configuration
                                         help page
+                                        TOFU
 open last download
-actual TOFU
 home page
 media files
 view history
 identity management
-help page for keybinds
 --------------------------------------------------------------------------------
 BACKLOG
 click on links to open them

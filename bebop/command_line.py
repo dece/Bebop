@@ -208,9 +208,13 @@ class CommandLine:
         """Handle input chars and raise a terminate interrupt on a valid key."""
         # Handle common keys.
         ch = self._validate_common_input(ch)
-        char = chr(ch)
-        if char in keys:
-            raise TerminateCommandInterrupt(char)
+        try:
+            char = chr(ch)
+        except ValueError:
+            pass
+        else:
+            if char in keys:
+                raise TerminateCommandInterrupt(char)
         return 0
 
 

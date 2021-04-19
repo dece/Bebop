@@ -47,7 +47,7 @@ class Browser:
 
     def __init__(self, config, cert_stash):
         self.config = config
-        self.stash = cert_stash or {}
+        self.stash = cert_stash
         self.screen = None
         self.dim = (0, 0)
         self.page_pad = None
@@ -272,6 +272,9 @@ class Browser:
             return
         if command in ("o", "open"):
             self.open_url(words[1], assume_absolute=True)
+        elif command == "forget-certificate":
+            from bebop.browser.gemini import forget_certificate
+            forget_certificate(self, words[1])
 
     def open_url(self, url, base_url=None, redirects=0, assume_absolute=False,
                  history=True, use_cache=True):

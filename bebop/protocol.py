@@ -8,17 +8,11 @@ from enum import IntEnum
 from typing import Optional
 
 from bebop.mime import DEFAULT_MIME_TYPE, MimeType
-from bebop.tofu import CertStatus, CERT_STATUS_INVALID, validate_cert
+from bebop.tofu import CertStatus, validate_cert
 
 
 GEMINI_URL_RE = re.compile(r"gemini://(?P<host>[^/]+)(?P<path>.*)")
 LINE_TERM = b"\r\n"
-
-
-def parse_gemini_url(url):
-    """Return a dict containing the hostname and the request path, or None."""
-    match = GEMINI_URL_RE.match(url)
-    return match.groupdict() if match else None
 
 
 class Request:
@@ -30,8 +24,21 @@ class Request:
     sending the request header and receiving the response:
 
     1. Instantiate a Request.
-    2. `connect` opens the connection, leaves the caller free to check stuff.
+    2. `connect` opens the connection and aborts it or leaves the caller free to
+       check stuff.
     3. `proceed` or `abort` can be called.
+
+    Attributes:
+    - url: URL to open.
+    - cert_stash: certificate stash to use an possibly update.
+    - state: request state.
+    - hostname: hostname derived from url, stored when `connect` is called.
+    - payload: bytes object of the payload request; build during `connect`, used
+      during `proceed`.
+    - ssock: TLS-wrapped socket.
+    - cert_validation: validation results dict, set after certificate has been
+      reviewed.
+    - error: human-readable connection error, may be set during `connect`.
     """
 
     # Initial state, connection is not established yet.
@@ -55,28 +62,69 @@ class Request:
         self.url = url
         self.cert_stash = cert_stash
         self.state = Request.STATE_INIT
+        self.hostname = ""
         self.payload = b""
         self.ssock = None
-        self.cert = None
-        self.cert_status = None
+        self.cert_validation = None
         self.error = ""
 
-    def connect(self, timeout):
+    def connect(self, timeout: int) -> bool:
         """Connect to a Gemini server and return a RequestEventType.
 
         Return True if the connection is established. The caller has to verify
         the request state and propose appropriate choices to the user if the
         certificate status is not CertStatus.VALID (Request.STATE_OK).
 
-        If connect returns False, the secure socket is aborted before return. If
-        connect returns True, it is up to the caller to decide whether to
-        continue (call proceed) the connection or abort it (call abort).
+        If connect returns False, the secure socket is aborted before return so
+        there is no need to call `abort`. If connect returns True, it is up to the
+        caller to decide whether to continue (call `proceed`) the connection or
+        abort it (call `abort`).
+
+        The request `state` is updated to reflect the connection state after the
+        function returns. The following list describes states related to
+        connection failure (False returned):
+
+        - STATE_INVALID_URL: URL is not valid.
+        - STATE_CONNECTION_FAILED: connection failed, either TCP timeout or
+          local TLS failure. Additionally, the request `error` attribute is set
+          to an error string describing the issue.
+
+        For all request states from now on, the `cert_validation` attribute is
+        updated with the result of the certificate validation.
+
+        The following list describes states related to validation failure (False
+        returned):
+
+        - STATE_ERROR_CERT: server certificate could not be validated at all.
+        - STATE_UNTRUSTED_CERT: server certificate mismatched the known
+          certificate for that hostname. The user should be presented with
+          options to solve the matter.
+
+        For other states, the connection is not aborted (True returned):
+
+        - STATE_INVALID_CERT: the certificate has one or more issues, e.g.
+          mismatching hostname or it is expired.
+        - STATE_UNKNOWN_CERT: the certificate is valid but unknown.
+        - STATE_OK: the certificate is valid and matches the known certificate
+          of that hostname.
+
+        After this function returns, the request state cannot be STATE_INIT.
+
+        Additional notes:
+
+        - The DER hash is compared against the fingerprint for this hostname
+          *and port*; the specification does not tell much about that, but we
+          are slightly more restrictive here by adding the port in the equation.
+        - The state STATE_INVALID_CERT is actually never used in Bebop because
+          of the current tendency to ignore any certificate fields and only
+          check the whole cert fingerprint. Here it is considered the same as a
+          valid certificate.
         """
-        url_parts = parse_gemini_url(self.url)
+        url_parts = GEMINI_URL_RE.match(self.url)
         if not url_parts:
             self.state = Request.STATE_INVALID_URL
             return False
-        hostname = url_parts["host"]
+        hostname = url_parts.groupdict()["host"]
         if ":" in hostname:
             hostname, port = hostname.split(":", maxsplit=1)
             try:
@@ -86,6 +134,7 @@ class Request:
                 return False
         else:
             port = 1965
+        self.hostname = hostname
 
         try:
             self.payload = self.url.encode()
@@ -105,27 +154,26 @@ class Request:
         try:
             self.ssock = context.wrap_socket(sock, server_hostname=hostname)
         except OSError as exc:
+            sock.close()
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror
             return False
 
         der = self.ssock.getpeercert(binary_form=True)
-        self.cert_status, self.cert = \
-            validate_cert(der, hostname, self.cert_stash)
-        if self.cert_status == CertStatus.ERROR:
+        self.cert_validation = validate_cert(der, hostname, self.cert_stash)
+        cert_status = self.cert_validation["status"]
+        if cert_status == CertStatus.ERROR:
             self.abort()
             self.state = Request.STATE_ERROR_CERT
             return False
-        if self.cert_status == CertStatus.WRONG_FINGERPRINT:
+        if cert_status == CertStatus.WRONG_FINGERPRINT:
             self.abort()
             self.state = Request.STATE_UNTRUSTED_CERT
             return False
 
-        if self.cert_status in CERT_STATUS_INVALID:
-            self.state = Request.STATE_INVALID_CERT
-        elif self.cert_status == CertStatus.VALID_NEW:
+        if cert_status == CertStatus.VALID_NEW:
             self.state = Request.STATE_UNKNOWN_CERT
-        else:  # self.cert_status == CertStatus.VALID
+        else:  # self.cert_status in (VALID, VALID_NEW, INVALID_CERT)
             self.state = Request.STATE_OK
         return True
 
@@ -232,6 +280,6 @@ class Response:
         return response
 
     @staticmethod
-    def get_generic_code(code) -> int:
+    def get_generic_code(code: int) -> int:
         """Return the generic version (x0) of this code."""
         return code - (code % 10)

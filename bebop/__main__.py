@@ -2,8 +2,8 @@ import argparse
 
 from bebop.browser.browser import Browser
 from bebop.config import load_config
-from bebop.fs import get_config_path, get_user_data_path
-from bebop.tofu import load_cert_stash, save_cert_stash
+from bebop.fs import ensure_bebop_files_exist, get_config_path
+from bebop.tofu import get_cert_stash_path, load_cert_stash, save_cert_stash
 
 
 def main():
@@ -19,11 +19,9 @@ def main():
     config_path = get_config_path()
     config = load_config(config_path)
 
-    user_data_path = get_user_data_path()
-    if not user_data_path.exists():
-        user_data_path.mkdir()
+    ensure_bebop_files_exist()
 
-    cert_stash_path = user_data_path / "known_hosts.txt"
+    cert_stash_path = get_cert_stash_path()
     cert_stash = load_cert_stash(cert_stash_path) or {}
     try:
         Browser(config, cert_stash).run(start_url=start_url)

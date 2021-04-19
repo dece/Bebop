@@ -45,3 +45,11 @@ def get_downloads_path() -> Path:
     if download_path:
         return Path(download_path)
     return Path.home()
+
+
+def ensure_bebop_files_exist():
+    """Ensure various Bebop's files or directories are present."""
+    # Ensure the user data directory exists.
+    user_data_path = get_user_data_path()
+    if not user_data_path.exists():
+        user_data_path.mkdir(parents=True)

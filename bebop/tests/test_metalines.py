@@ -1,9 +1,9 @@
 import unittest
 
-from ..rendering import _explode_words, _find_next_sep, wrap_words
+from ..metalines import _explode_words, _find_next_sep, wrap_words
 
 
-class TestRenderer(unittest.TestCase):
+class TestMetalines(unittest.TestCase):
 
     def test_wrap_words(self):
         t = "wrap me wrap me youcantwrapthisonewithoutforce bla bla bla bla"

@@ -8,6 +8,7 @@ from bebop.fs import get_downloads_path
 from bebop.navigation import set_parameter
 from bebop.page import Page
 from bebop.protocol import Request, Response
+from bebop.tofu import trust_fingerprint, untrust_fingerprint, WRONG_FP_ALERT
 
 
 MAX_URL_LEN = 1024
@@ -17,10 +18,30 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
                     use_cache=True):
     """Open a Gemini URL and set the formatted response as content.
 
-    After initiating the connection, TODO
+    While the specification is not set in stone, every client takes a slightly
+    different approach to enforcing TOFU. Read the `Request.connect` docs to
+    find about cases where connection is aborted without asking the user. What
+    interests us here is what happens when the user should decide herself? This
+    happens in several cases, matching the request possible states. Here is
+    what Bebop do (or want to do):
+
+    - STATE_INVALID_CERT: the certificate has non-fatal issues; we may
+      present the user the problems found and let her decide whether to trust
+      temporarily the certificate or not BUT we currently do not parse the
+      certificate's fields, so this state is never used.
+    - STATE_UNKNOWN_CERT: the certificate is valid but has not been seen before;
+      as we're doing TOFU here, we could automatically trust it or let the user
+      choose. For simplicity, we always trust it permanently.
+
+    Attributes:
+    - browser: Browser object making the request.
+    - url: a valid URL with Gemini scheme to open.
+    - redirects: current amount of redirections done to open the initial URL.
+    - history: if true, save the final URL to history.
+    - use_cache: if true, look up if the page is cached before requesting it.
     """
     if len(url) >= MAX_URL_LEN:
-        browser.set_status_error(f"Request URL too long.")
+        browser.set_status_error("Request URL too long.")
         return
 
     browser.set_status(f"Loading {url}")
@@ -40,8 +61,8 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         if req.state == Request.STATE_ERROR_CERT:
             error = f"Certificate was missing or corrupt ({url})."
         elif req.state == Request.STATE_UNTRUSTED_CERT:
+            _handle_untrusted_cert(browser, req)
             error = f"Certificate has been changed ({url})."
-            # TODO propose the user ways to handle this.
         elif req.state == Request.STATE_CONNECTION_FAILED:
             error_details = ": " + req.error if req.error else "."
             error = f"Connection failed ({url})" + error_details
@@ -51,13 +72,18 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         return
 
     if req.state == Request.STATE_INVALID_CERT:
-        # TODO propose abort / temp trust
         pass
     elif req.state == Request.STATE_UNKNOWN_CERT:
-        # TODO propose abort / temp trust / perm trust
-        pass
-    else:
-        pass # TODO
+        # Certificate is valid but unknown: trust it permanently.
+        hostname = req.hostname
+        fingerprint = req.cert_validation["hash"]
+        trust_fingerprint(
+            browser.stash,
+            hostname,
+            "SHA-512",
+            fingerprint,
+            trust_always=True
+        )
 
     data = req.proceed()
     if not data:
@@ -69,6 +95,26 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         return
 
     _handle_response(browser, response, url, redirects, history)
+
+
+def _handle_untrusted_cert(browser: Browser, request: Request):
+    """Handle a mismatch between known & server fingerprints.
+
+    This function formats an alert page to explain to the user what the hell is
+    going on and displays it.
+    """
+    remote_fp = request.cert_validation["hash"]
+    local_fp = request.cert_validation["saved_hash"]
+    alert_page_source = WRONG_FP_ALERT.format(
+        hostname=request.hostname,
+        local_fp=local_fp,
+        remote_fp=remote_fp,
+    )
+    alert_page = Page.from_gemtext(
+        alert_page_source,
+        browser.config["text_width"]
+    )
+    browser.load_page(alert_page)
 
 
 def _handle_response(browser: Browser, response: Response, url: str,
@@ -167,3 +213,15 @@ def _handle_input_request(browser: Browser, from_url: str, message: str =None):
         return
     url = set_parameter(from_url, user_input)
     open_gemini_url(browser, url)
+
+
+def forget_certificate(browser: Browser, hostname: str):
+    """Remove the fingerprint associated to this hostname for the cert stash."""
+    key = browser.prompt(f"Remove fingerprint from {hostname}? [y/N]", "ynN")
+    if key != "y":
+        browser.reset_status()
+        return
+    if untrust_fingerprint(browser.stash, hostname):
+        browser.set_status(f"Known certificate for {hostname} removed.")
+    else:
+        browser.set_status_error(f"Known certificate for {hostname} not found.")
