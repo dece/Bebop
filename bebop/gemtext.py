@@ -66,6 +66,18 @@ def parse_gemtext(text: str) -> ParsedGemtext:
         if not line:
             continue
 
+        if line.startswith(Preformatted.FENCE):
+            if preformatted:
+                elements.append(preformatted)
+                preformatted = None
+            else:
+                preformatted = Preformatted([])
+            continue
+
+        if preformatted:
+            preformatted.lines.append(line)
+            continue
+
         match = Title.RE.match(line)
         if match:
             hashtags, text = match.groups()
@@ -84,14 +96,6 @@ def parse_gemtext(text: str) -> ParsedGemtext:
             elements.append(Link(url, text, last_link_id))
             continue
 
-        if line.startswith(Preformatted.FENCE):
-            if preformatted:
-                elements.append(preformatted)
-                preformatted = None
-            else:
-                preformatted = Preformatted([])
-            continue
-
         match = Blockquote.RE.match(line)
         if match:
             text = match.groups()[0]
@@ -104,10 +108,7 @@ def parse_gemtext(text: str) -> ParsedGemtext:
             elements.append(ListItem(text))
             continue
 
-        if preformatted:
-            preformatted.lines.append(line)
-        else:
-            elements.append(Paragraph(line))
+        elements.append(Paragraph(line))
 
     # If a preformatted block is not closed before the file ends, consider it
     # closed anyway; the spec does not seem to talk about that case.
