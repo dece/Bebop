@@ -24,7 +24,7 @@ def render_lines(metalines, window, max_width):
     dimensions of the resized window.
     """
     num_lines = len(metalines)
-    new_dimensions = num_lines, max_width
+    new_dimensions = max(num_lines, 1), max_width
     window.resize(*new_dimensions)
     for line_index, metaline in enumerate(metalines):
         try:
