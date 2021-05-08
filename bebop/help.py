@@ -32,6 +32,7 @@ name, not the symbol itself.
 - b: open bookmarks
 - B: add current page to bookmarks
 - e: open the current page source in an editor
+- y: open history
 - digits: go to the corresponding link ID
 - escape: reset status line text
 ```

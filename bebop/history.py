@@ -2,20 +2,34 @@
 
 
 class History:
-    """Basic browsing history manager."""
+    """Basic browsing history manager.
+
+    The history follows the "by last visited" behaviour of Firefox for the lack
+    of a better idea. Links are pushed as they are visited. If a link is visited
+    again, it bubbles up to the top of the history.
+    """
 
     def __init__(self):
         self.urls = []
 
-    def has_links(self):
-        """Return True if there is at least one URL in the history."""
-        return bool(self.urls)
-
     def push(self, url):
-        """Add an URL to the history."""
-        if not self.urls or self.urls[-1] != url:
-            self.urls.append(url)
+        """Add an URL to the history.
 
-    def pop(self):
-        """Return latest URL added to history and remove it."""
-        return self.urls.pop()
+        If the URL is already in the list, it is moved to the top.
+        """
+        try:
+            self.urls.remove(url)
+        except ValueError:
+            pass
+        self.urls.append(url)
+
+    def get_previous(self):
+        """Return previous URL, or None if there is only one or zero URL."""
+        try:
+            return self.urls[-2]
+        except IndexError:
+            return None
+
+    def to_gemtext(self):
+        """Generate a simple Gemtext page of the current history."""
+        return "\n".join("=> " + url for url in self.urls)

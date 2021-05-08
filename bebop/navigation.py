@@ -1,66 +1,192 @@
-"""URI (RFC 3986) helpers for Gemini navigation."""
+"""URI (RFC 3986) helpers for Gemini navigation.
 
-import urllib.parse
+It was supposed to be just thin fixes around urllib.parse functions but as
+gemini is not recognized as a valid scheme it breaks a lot of things, so it
+turned into a basic re-implementation of the RFC.
+"""
+
+import re
+from ssl import RAND_pseudo_bytes
+from typing import Any, Dict, Optional
+from urllib.parse import quote
 
 
-def parse_url(url: str, absolute: bool =False):
+URI_RE = re.compile(
+    "^"
+    r"(?:(?P<scheme>[^:/?#\n]+):)?"
+    r"(?://(?P<netloc>[^/?#\n]*))?"
+    r"(?P<path>[^?#\n]*)"
+    r"(?:\?(?P<query>[^#\n]*))?"
+    r"(?:#(?P<fragment>.*))?"
+    "$"
+)
+
+
+class InvalidUrlException(Exception):
+    """Generic exception for invalid URLs used in this module."""
+
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+
+
+def parse_url(
+    url: str,
+    absolute: bool =False,
+    default_scheme: Optional[str] =None
+) -> Dict[str, Any]:
     """Return URL parts from this URL.
 
-    This uses urllib.parse.urlparse to not reinvent the wheel, with a few
-    adjustments.
+    Use the RFC regex to get parts from URL. This function can be used on
+    regular URLs but also on not-so-compliant URLs, e.g. "capsule.org/page",
+    which might be typed by an user (see `absolute` argument).
 
-    First, urllib does not know the Gemini scheme (yet!) so if it
-    is specified we strip it to get an absolute netloc.
+    Arguments:
+    - url: URL to parse.
+    - absolute: assume the URL is absolute, e.g. in the case we are trying to
+      parse an URL an user has written, which is most of the time an absolute
+      URL even if not perfectly so. This only has an effect if, after the
+      initial parsing, there is no scheme or netloc available.
+    - default_scheme: specify the scheme to use if the URL either does not
+      specify it and we need it (e.g. there is a location), or `absolute` is
+      true; if absolute is true but `default_scheme` is not specified, use the
+      gemini scheme.
 
-    Second, as this function can be used to process arbitrary user input, we
-    clean it a bit:
-    - strip whitespaces from the URL
-    - if "absolute" is True, consider that the URL is meant to be absolute, even
-      though it technically is not, e.g. "dece.space" is not absolute as it
-      misses either the // delimiter.
+    Returns:
+    URL parts, as a dictionary with the following keys: "scheme", "netloc",
+    "path", "query" and "fragment". All keys are present, but all values can be
+    None, except path which is always a string (but can be empty).
+
+    Raises:
+    InvalidUrlException if you put really really stupid strings in there.
     """
-    url = url.strip()
-    if url.startswith("file://"):
-        return urllib.parse.urlparse(url)
-    if url.startswith("gemini://"):
-        url = url[7:]
-    parts = urllib.parse.urlparse(url, scheme="gemini")
-    if not parts.netloc or absolute:
-        parts = urllib.parse.urlparse(f"//{url}", scheme="gemini")
+    match = URI_RE.match(url)
+    if not match:
+        raise InvalidUrlException(url)
+
+    match_dict = match.groupdict()
+    parts = {
+        k: match_dict.get(k)
+        for k in ("scheme", "netloc", "path", "query", "fragment")
+    }
+
+    # Smol hack: if we assume it's an absolute URL, just prefix scheme and "//".
+    if absolute and not parts["scheme"] and not parts["netloc"]:
+        scheme = default_scheme or "gemini"
+        return parse_url(scheme + "://" + url)
+
+    # Another smol hack: if there is no scheme, use `default_scheme` as default.
+    if default_scheme and parts["scheme"] is None:
+        parts["scheme"] = default_scheme
+
     return parts
 
 
-def sanitize_url(url: str):
-    """Parse and unparse an URL to ensure it has been properly formatted."""
-    return urllib.parse.urlunparse(parse_url(url))
+def unparse_url(parts) -> str:
+    """Unparse parts of an URL produced by `parse_url`."""
+    url = ""
+    if parts["scheme"] is not None:
+        url += parts["scheme"] + ":"
+    if parts["netloc"] is not None:
+        url += "//" + parts["netloc"]
+    if parts["path"] is not None:
+        url += parts["path"]
+    if parts["query"] is not None:
+        url += "?" + parts["query"]
+    if parts["fragment"] is not None:
+        url += "#" + parts["fragment"]
+    return url
 
 
-def join_url(base_url: str, url: str):
-    """Join a base URL with a relative url."""
-    if base_url.startswith("gemini://"):
-        base_url = base_url[7:]
-    parts = parse_url(urllib.parse.urljoin(base_url, url))
-    return urllib.parse.urlunparse(parts)
+def clear_post_path(parts) -> None:
+    """Clear optional post-path parts (query and fragment)."""
+    parts["query"] = None
+    parts["fragment"] = None
 
 
-def set_parameter(url: str, user_input: str):
+def join_url(base_url: str, rel_url: str) -> str:
+    """Join a base URL with a relative path."""
+    parts = parse_url(base_url)
+    rel_parts = parse_url(rel_url)
+    if rel_url.startswith("/"):
+        new_path = rel_parts["path"]
+    else:
+        base_path = parts["path"] or ""
+        new_path = remove_last_segment(base_path) + "/" + rel_parts["path"]
+    parts["path"] = remove_dot_segments(new_path)
+    parts["query"] = rel_parts["query"]
+    parts["fragment"] = rel_parts["fragment"]
+    return unparse_url(parts)
+
+
+def remove_dot_segments(path: str):
+    """Remove dot segments in an URL path."""
+    output = ""
+    while path:
+        if path.startswith("../"):
+            path = path[3:]
+        elif path.startswith("./") or path.startswith("/./"):
+            path = path[2:]  # Either strip "./" or leave a single "/".
+        elif path == "/.":
+            path = "/"
+        elif path.startswith("/../"):
+            path = "/" + path[4:]
+            output = remove_last_segment(output)
+        elif path == "/..":
+            path = "/"
+            output = remove_last_segment(output)
+        elif path in (".", ".."):
+            path = ""
+        else:
+            first_segment, path = pop_first_segment(path)
+            output += first_segment
+    return output
+
+
+def remove_last_segment(path: str):
+    """Remove last path segment, including preceding "/" if any."""
+    return path[:path.rfind("/")]
+
+
+def pop_first_segment(path: str):
+    """Return first segment and the rest.
+
+    Return the first segment including the initial "/" if any, and the rest of
+    the path up to, but not including, the next "/" or the end of the string.
+    """
+    next_slash = path[1:].find("/")
+    if next_slash == -1:
+        return path, ""
+    next_slash += 1
+    return path[:next_slash], path[next_slash:]
+
+
+def set_parameter(url: str, user_input: str) -> str:
     """Return a new URL with the escaped user input appended."""
-    quoted_input = urllib.parse.quote(user_input)
-    if "?" in url:
-        url = url.split("?", maxsplit=1)[0]
-    return url + "?" + quoted_input
+    parts = parse_url(url)
+    parts["query"] = quote(user_input)
+    return unparse_url(parts)
+
+
+def get_parent_path(path: str) -> str:
+    """Return the parent path."""
+    last_slash = path.rstrip("/").rfind("/")
+    if last_slash > -1:
+        path = path[:last_slash + 1]
+    return path
 
 
 def get_parent_url(url: str) -> str:
     """Return the parent URL (one level up)."""
-    scheme, netloc, path, _, _, _ = parse_url(url)
-    last_slash = path.rstrip("/").rfind("/")
-    if last_slash > -1:
-        path = path[:last_slash + 1]
-    return urllib.parse.urlunparse((scheme, netloc, path, "", "", ""))
+    parts = parse_url(url)
+    parts["path"] = get_parent_path(parts["path"])  # type: ignore
+    clear_post_path(parts)
+    return unparse_url(parts)
 
 
 def get_root_url(url: str) -> str:
     """Return the root URL (basically discards path)."""
-    scheme, netloc, _, _, _, _ = parse_url(url)
-    return urllib.parse.urlunparse((scheme, netloc, "/", "", "", ""))
+    parts = parse_url(url)
+    parts["path"] = "/"
+    clear_post_path(parts)
+    return unparse_url(parts)

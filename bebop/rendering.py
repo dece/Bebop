@@ -15,7 +15,7 @@ def render_lines(metalines, window, max_width):
 
     Arguments:
     - metalines: list of metalines to render, must have at least one element.
-    - window: window that will be resized as filled with rendered lines.
+    - window: window that will be resized and filled with rendered lines.
     - max_width: line length limit for the pad.
 
     Returns:

@@ -14,8 +14,7 @@ from bebop.tofu import trust_fingerprint, untrust_fingerprint, WRONG_FP_ALERT
 MAX_URL_LEN = 1024
 
 
-def open_gemini_url(browser: Browser, url, redirects=0, history=True,
-                    use_cache=True):
+def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
     """Open a Gemini URL and set the formatted response as content.
 
     While the specification is not set in stone, every client takes a slightly
@@ -33,12 +32,14 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
       as we're doing TOFU here, we could automatically trust it or let the user
       choose. For simplicity, we always trust it permanently.
 
-    Attributes:
+    Arguments:
     - browser: Browser object making the request.
     - url: a valid URL with Gemini scheme to open.
     - redirects: current amount of redirections done to open the initial URL.
-    - history: if true, save the final URL to history.
     - use_cache: if true, look up if the page is cached before requesting it.
+
+    Returns:
+    True on success, False otherwise.
     """
     if len(url) >= MAX_URL_LEN:
         browser.set_status_error("Request URL too long.")
@@ -48,11 +49,9 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
 
     if use_cache and url in browser.cache:
         browser.load_page(browser.cache[url])
-        if browser.current_url and history:
-            browser.history.push(browser.current_url)
         browser.current_url = url
         browser.set_status(url)
-        return
+        return True
 
     req = Request(url, browser.stash)
     connect_timeout = browser.config["connect_timeout"]
@@ -69,7 +68,7 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
         else:
             error = f"Connection failed ({url})."
         browser.set_status_error(error)
-        return
+        return False
 
     if req.state == Request.STATE_INVALID_CERT:
         pass
@@ -88,13 +87,13 @@ def open_gemini_url(browser: Browser, url, redirects=0, history=True,
     data = req.proceed()
     if not data:
         browser.set_status_error(f"Server did not respond in time ({url}).")
-        return
+        return False
     response = Response.parse(data)
     if not response:
         browser.set_status_error(f"Server response parsing failed ({url}).")
-        return
+        return False
 
-    _handle_response(browser, response, url, redirects, history)
+    return _handle_response(browser, response, url, redirects)
 
 
 def _handle_untrusted_cert(browser: Browser, request: Request):
@@ -118,10 +117,14 @@ def _handle_untrusted_cert(browser: Browser, request: Request):
 
 
 def _handle_response(browser: Browser, response: Response, url: str,
-                     redirects: int, history: bool):
-    """Handle a response from a Gemini server."""
+                     redirects: int):
+    """Handle a response from a Gemini server.
+
+    Returns:
+    True on success, False otherwise.
+    """
     if response.code == 20:
-        _handle_successful_response(browser, response, url, history)
+        return _handle_successful_response(browser, response, url)
     elif response.generic_code == 30 and response.meta:
         browser.open_url(response.meta, base_url=url, redirects=redirects + 1)
     elif response.generic_code in (40, 50):
@@ -132,10 +135,10 @@ def _handle_response(browser: Browser, response: Response, url: str,
     else:
         error = f"Unhandled response code {response.code}"
         browser.set_status_error(error)
+    return False
 
 
-def _handle_successful_response(browser: Browser, response: Response, url: str,
-                                history: bool):
+def _handle_successful_response(browser: Browser, response: Response, url: str):
     """Handle a successful response content from a Gemini server.
 
     According to the MIME type received or inferred, the response is either
@@ -150,8 +153,11 @@ def _handle_successful_response(browser: Browser, response: Response, url: str,
     - browser: Browser instance that made the initial request.
     - url: original URL.
     - response: a successful Response.
-    - history: whether to modify history on a page load.
+
+    Returns:
+    True on success, False otherwise.
     """
+    # Use appropriate response parser according to the MIME type.
     mime_type = response.get_mime_type()
     page = None
     error = None
@@ -171,13 +177,14 @@ def _handle_successful_response(browser: Browser, response: Response, url: str,
     else:
         filepath = _get_download_path(url)
 
+    # If a page has been produced, load it. Else if a file has been retrieved,
+    # download it.
     if page:
         browser.load_page(page)
-        if browser.current_url and history:
-            browser.history.push(browser.current_url)
         browser.current_url = url
         browser.cache[url] = page
         browser.set_status(url)
+        return True
     elif filepath:
         try:
             with open(filepath, "wb") as download_file:
@@ -186,8 +193,10 @@ def _handle_successful_response(browser: Browser, response: Response, url: str,
             browser.set_status_error(f"Failed to save {url} ({exc})")
         else:
             browser.set_status(f"Downloaded {url} ({mime_type.short}).")
+            return True
     elif error:
         browser.set_status_error(error)
+    return False
 
 
 def _get_download_path(url: str) -> Path:

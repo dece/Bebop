@@ -18,7 +18,8 @@ from bebop.history import History
 from bebop.links import Links
 from bebop.mouse import ButtonState
 from bebop.navigation import (
-    get_parent_url, get_root_url, join_url, parse_url, sanitize_url)
+    get_parent_url, get_root_url, join_url, parse_url, unparse_url
+)
 from bebop.page import Page
 from bebop.page_pad import PagePad
 
@@ -88,6 +89,9 @@ class Browser:
             },
             "help": {
                 "open": self.open_help,
+            },
+            "history": {
+                "open": self.open_history,
             },
         }
 
@@ -176,6 +180,8 @@ class Browser:
             self.add_bookmark()
         elif char == ord("e"):
             self.edit_page()
+        elif char == ord("y"):
+            self.open_history()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -300,38 +306,52 @@ class Browser:
             return
 
         if assume_absolute or not self.current_url:
-            parts = parse_url(url, absolute=True)
-            join = False
+            parts = parse_url(url, absolute=True, default_scheme="gemini")
         else:
             parts = parse_url(url)
-            join = True
 
-        if parts.scheme == "gemini":
+        if parts["netloc"] is None:
+            base_url = base_url or self.current_url
+            if base_url:
+                parts = parse_url(join_url(base_url, url))
+            else:
+                self.set_status_error(f"Can't open '{url}'.")
+                return
+
+        # Replace URL passed as parameter by a proper absolute one.
+        url = unparse_url(parts)
+
+        scheme = parts["scheme"] or ""
+        if scheme == "gemini":
             from bebop.browser.gemini import open_gemini_url
-            # If there is no netloc, this is a relative URL.
-            if join or base_url:
-                url = join_url(base_url or self.current_url, url)
-            open_gemini_url(
+            success = open_gemini_url(
                 self,
-                sanitize_url(url),
+                url,
                 redirects=redirects,
-                history=history,
                 use_cache=use_cache
             )
-        elif parts.scheme.startswith("http"):
+            if history and success:
+                self.history.push(url)
+
+        elif scheme.startswith("http"):
             from bebop.browser.web import open_web_url
             open_web_url(self, url)
-        elif parts.scheme == "file":
+
+        elif scheme == "file":
             from bebop.browser.file import open_file
-            open_file(self, parts.path, history=history)
-        elif parts.scheme == "bebop":
-            special_page = self.special_pages.get(parts.netloc)
+            file_url = open_file(self, parts["path"])
+            if history and file_url:
+                self.history.push(file_url)
+
+        elif scheme == "bebop":
+            special_page = self.special_pages.get(parts["path"])
             if special_page:
                 special_page["open"]()
             else:
                 self.set_status_error("Unknown page.")
+
         else:
-            self.set_status_error(f"Protocol {parts.scheme} not supported.")
+            self.set_status_error(f"Protocol '{scheme}' not supported.")
 
     def load_page(self, page: Page):
         """Load Gemtext data as the current page."""
@@ -455,8 +475,9 @@ class Browser:
 
     def go_back(self):
         """Go back in history if possible."""
-        if self.history.has_links():
-            self.open_url(self.history.pop(), history=False)
+        previous_url = self.history.get_previous()
+        if previous_url:
+            self.open_url(previous_url, history=False)
 
     def go_to_parent_page(self):
         """Go to the parent URL if possible."""
@@ -475,7 +496,7 @@ class Browser:
             self.set_status_error("Failed to open bookmarks.")
             return
         self.load_page(Page.from_gemtext(content, self.config["text_width"]))
-        self.current_url = "bebop://bookmarks"
+        self.current_url = "bebop:bookmarks"
 
     def add_bookmark(self):
         """Add the current URL as bookmark."""
@@ -502,8 +523,9 @@ class Browser:
         directly from their location on disk.
         """
         delete_source_after = False
-        if self.current_url.startswith("bebop://"):
-            page_name = self.current_url[len("bebop://"):]
+        parts = parse_url(self.current_url)
+        if parts["scheme"] == "bebop":
+            page_name = parts["path"]
             special_pages_functions = self.special_pages.get(page_name)
             if not special_pages_functions:
                 return
@@ -530,9 +552,17 @@ class Browser:
     def open_help(self):
         """Show the help page."""
         self.load_page(Page.from_gemtext(HELP_PAGE, self.config["text_width"]))
-        self.current_url = "bebop://help"
+        self.current_url = "bebop:help"
 
     def prompt(self, text, keys):
         """Display the text and allow it to type one of the given keys."""
         self.set_status(text)
         return self.command_line.prompt_key(keys)
+
+    def open_history(self):
+        """Show a generated history of visited pages."""
+        self.load_page(Page.from_gemtext(
+            self.history.to_gemtext(),
+            self.config["text_width"]
+        ))
+        self.current_url = "bebop:history"
