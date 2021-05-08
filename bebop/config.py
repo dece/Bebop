@@ -9,6 +9,7 @@ DEFAULT_CONFIG = {
     "text_width": 80,
     "source_editor": ["vi"],
     "command_editor": ["vi"],
+    "history_limit": 1000,
 }
 
 

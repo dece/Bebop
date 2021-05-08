@@ -56,7 +56,7 @@ class Browser:
         self.command_line = None
         self.running = True
         self.status_data = ("", 0, 0)
-        self.history = History()
+        self.history = History(self.config["history_limit"])
         self.cache = {}
         self.special_pages = self.setup_special_pages()
         self._current_url = ""
@@ -203,10 +203,15 @@ class Browser:
                 elif char == ord("l"):
                     self.scroll_page_horizontally(1)
             self.screen.nodelay(False)
-        # else:
-        #     unctrled = curses.unctrl(char)
-        #     if unctrled == b"^T":
-        #         self.set_status("test!")
+        # elif char == ord("@"):
+        #     self.current_url = "bebop:debugzone"
+        #     t = "\n".join("* " + u for u in self.history.urls)
+        #     t += "\n\n" + "\n".join("* " + u for u in self.history.backlist)
+        #     self.load_page(Page.from_text(t))
+        #     # unctrled = curses.unctrl(char)
+        #     # if unctrled == b"^T":
+        #     #     self.set_status("test!")
+        #     pass
 
     @property
     def page_pad_size(self):
@@ -310,7 +315,7 @@ class Browser:
         else:
             parts = parse_url(url)
 
-        if parts["netloc"] is None:
+        if parts["scheme"] is None and parts["netloc"] is None:
             base_url = base_url or self.current_url
             if base_url:
                 parts = parse_url(join_url(base_url, url))
@@ -475,7 +480,10 @@ class Browser:
 
     def go_back(self):
         """Go back in history if possible."""
-        previous_url = self.history.get_previous()
+        if self.current_url.startswith("bebop:"):
+            previous_url = self.history.get_previous(actual_previous=True)
+        else:
+            previous_url = self.history.get_previous()
         if previous_url:
             self.open_url(previous_url, history=False)
 
@@ -489,14 +497,19 @@ class Browser:
         if self.current_url:
             self.open_url(get_root_url(self.current_url))
 
+    def open_internal_page(self, name, gemtext):
+        """Open some content corresponding to a "bebop:" internal URL."""
+        page = Page.from_gemtext(gemtext, self.config["text_width"])
+        self.load_page(page)
+        self.current_url = "bebop:" + name
+
     def open_bookmarks(self):
         """Open bookmarks."""
         content = get_bookmarks_document()
         if content is None:
             self.set_status_error("Failed to open bookmarks.")
             return
-        self.load_page(Page.from_gemtext(content, self.config["text_width"]))
-        self.current_url = "bebop:bookmarks"
+        self.open_internal_page("bookmarks", content)
 
     def add_bookmark(self):
         """Add the current URL as bookmark."""
@@ -551,8 +564,7 @@ class Browser:
 
     def open_help(self):
         """Show the help page."""
-        self.load_page(Page.from_gemtext(HELP_PAGE, self.config["text_width"]))
-        self.current_url = "bebop:help"
+        self.open_internal_page("help", HELP_PAGE)
 
     def prompt(self, text, keys):
         """Display the text and allow it to type one of the given keys."""
@@ -561,8 +573,4 @@ class Browser:
 
     def open_history(self):
         """Show a generated history of visited pages."""
-        self.load_page(Page.from_gemtext(
-            self.history.to_gemtext(),
-            self.config["text_width"]
-        ))
-        self.current_url = "bebop:history"
+        self.open_internal_page("history", self.history.to_gemtext())

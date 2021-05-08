@@ -4,32 +4,54 @@
 class History:
     """Basic browsing history manager.
 
-    The history follows the "by last visited" behaviour of Firefox for the lack
-    of a better idea. Links are pushed as they are visited. If a link is visited
-    again, it bubbles up to the top of the history.
     """
 
-    def __init__(self):
+    def __init__(self, limit):
         self.urls = []
+        self.backlist = []
+        self.limit = limit
 
     def push(self, url):
-        """Add an URL to the history.
-
-        If the URL is already in the list, it is moved to the top.
-        """
+        """Add an URL to the history."""
+        # Append url to our URLs, bubbling it up if it's already there.
         try:
             self.urls.remove(url)
         except ValueError:
             pass
         self.urls.append(url)
+        if len(self.urls) > self.limit:
+            self.urls.pop(0)
 
-    def get_previous(self):
+        # Also simply push it to the backlist.
+        self.backlist.append(url)
+        if len(self.backlist) > self.limit:
+            self.backlist.pop(0)
+
+    def get_previous(self, actual_previous=False):
         """Return previous URL, or None if there is only one or zero URL."""
         try:
-            return self.urls[-2]
+            if actual_previous:
+                return self.backlist[-1]
+            # The backlist should be populated with the first link visited and
+            # never completely emptied afterwards, or we end up in situation
+            # where you can't get away from internal pages.
+            if len(self.backlist) > 1:
+                self.backlist.pop()
+            return self.backlist[-1]
         except IndexError:
             return None
 
     def to_gemtext(self):
-        """Generate a simple Gemtext page of the current history."""
-        return "\n".join("=> " + url for url in self.urls)
+        """Generate a simple Gemtext page of the current history.
+
+        Present a page that follows the "by last visited" behaviour of Firefox
+        for the lack of a better idea, avoiding duplicated entries.
+        """
+        urls = []
+        seen = set()
+        for url in reversed(self.urls):
+            if url in seen:
+                continue
+            urls.append(url)
+            seen.add(url)
+        return "\n".join("=> " + url for url in urls)

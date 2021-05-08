@@ -31,3 +31,4 @@ handle soft-hyphens on wrapping
 bug: combining chars reduce lengths
 non shit command-line
 response code 11 (if still there)
+gopher?
