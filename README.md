@@ -79,6 +79,7 @@ Here are the available options:
 | `text_width`               | int          | 80             | Rendered line length.                 |
 | `source_editor`            | string list  | `["vi"]`       | Command to use for editing sources.   |
 | `command_editor`           | string list  | `["vi"]`       | Command to use for editing CLI input. |
+| `history_limit`            | int          | 1000           | Maximum entries in history.           |
 | `external_commands`        | (see note 2) | {}             | Commands to open various files.       |
 | `external_command_default` | string list  | `["xdg-open"]` | Default command to open files.        |
 
