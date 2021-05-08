@@ -193,6 +193,7 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             browser.set_status_error(f"Failed to save {url} ({exc})")
         else:
             browser.set_status(f"Downloaded {url} ({mime_type.short}).")
+            browser.last_download = mime_type, filepath
             return True
     elif error:
         browser.set_status_error(error)

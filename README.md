@@ -57,7 +57,7 @@ It also provide these features:
 
 - History
 - Caching
-- Bookmarks: it's just a text file with bindings.
+- Bookmarks (it's just a text file with bindings)
 - Downloads
 
 Check out [this board](BOARD.txt) for what's done and coming next.
@@ -73,18 +73,26 @@ you want, just restart Bebop to take changes into account.
 
 Here are the available options:
 
-| Key               | Type        | Default  | Description                           |
-|-------------------|-------------|----------|---------------------------------------|
-| `connect_timeout` | int         | 10       | Seconds before connection times out.  |
-| `text_width`      | int         | 80       | Rendered line length.                 |
-| `source_editor`   | string list | `["vi"]` | Command to use for editing sources.   |
-| `command_editor`  | string list | `["vi"]` | Command to use for editing CLI input. |
+| Key                        | Type         | Default        | Description                           |
+|----------------------------|--------------|----------------|---------------------------------------|
+| `connect_timeout`          | int          | 10             | Seconds before connection times out.  |
+| `text_width`               | int          | 80             | Rendered line length.                 |
+| `source_editor`            | string list  | `["vi"]`       | Command to use for editing sources.   |
+| `command_editor`           | string list  | `["vi"]`       | Command to use for editing CLI input. |
+| `external_commands`        | (see note 2) | {}             | Commands to open various files.       |
+| `external_command_default` | string list  | `["xdg-open"]` | Default command to open files.        |
 
 Note: for the "command" parameters such as `source_editor` and `command_editor`,
 a string list is used to separate the different program arguments, e.g. if you
 wish to use `vim -c 'startinsert'`, you should write the list `["vim", "-c",
 "startinsert"]`. In both case, a temporary or regular file name will be appended
 to this command when run.
+
+2: the `external_commands` dict maps MIME types to commands just as above. For
+example, if you want to open video files with VLC and audio files in Clementine,
+you can use the following dict: `{"audio": ["clementine"], "video", ["vlc"]}`.
+For now only "main" MIME types are supported, i.e. you cannot specify precise
+types like "audio/flac", just "audio".
 
 
 

@@ -26,6 +26,7 @@ name, not the symbol itself.
 - gg: go to the top of the page
 - G: go to the bottom of the page
 - o: open an URL
+- O: open last download with an external command
 - p: go to the previous page
 - u: go to the parent page (up a level in URL)
 - U: go to the root page (root URL for the current domain)

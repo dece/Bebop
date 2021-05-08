@@ -4,8 +4,11 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
+import subprocess
 import tempfile
 from math import inf
+from pathlib import Path
+from typing import Optional, Tuple
 
 from bebop.bookmarks import (
     get_bookmarks_path, get_bookmarks_document, save_bookmark
@@ -16,6 +19,7 @@ from bebop.external import open_external_program
 from bebop.help import HELP_PAGE
 from bebop.history import History
 from bebop.links import Links
+from bebop.mime import MimeType
 from bebop.mouse import ButtonState
 from bebop.navigation import (
     get_parent_url, get_root_url, join_url, parse_url, unparse_url
@@ -44,6 +48,7 @@ class Browser:
       values are dicts as well: the "open" key maps to a callable to use when
       the page is accessed, and the optional "source" key maps to callable
       returning the page source path.
+    - last_download: tuple of MimeType and path, or None.
     """
 
     def __init__(self, config, cert_stash):
@@ -59,6 +64,7 @@ class Browser:
         self.history = History(self.config["history_limit"])
         self.cache = {}
         self.special_pages = self.setup_special_pages()
+        self.last_download: Optional[Tuple[MimeType, Path]] = None
         self._current_url = ""
 
     @property
@@ -168,6 +174,8 @@ class Browser:
             self.scroll_page_vertically(inf)
         elif char == ord("o"):
             self.quick_command("open")
+        elif char == ord("O"):
+            self.open_last_download()
         elif char == ord("p"):
             self.go_back()
         elif char == ord("u"):
@@ -574,3 +582,23 @@ class Browser:
     def open_history(self):
         """Show a generated history of visited pages."""
         self.open_internal_page("history", self.history.to_gemtext())
+
+    def open_last_download(self):
+        """Open the last downloaded file."""
+        if not self.last_download:
+            return
+        mime_type, path = self.last_download
+        command = self.config["external_commands"].get(mime_type.main_type)
+        if not command:
+            command = self.config["external_command_default"]
+        command = command + [str(path)]
+        self.set_status(f"Running '{' '.join(command)}'...")
+        try:
+            subprocess.Popen(
+                command,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True
+            )
+        except FileNotFoundError as exc:
+            self.set_status_error(f"Failed to run command: {exc}")

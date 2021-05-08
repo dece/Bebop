@@ -6,7 +6,6 @@ turned into a basic re-implementation of the RFC.
 """
 
 import re
-from ssl import RAND_pseudo_bytes
 from typing import Any, Dict, Optional
 from urllib.parse import quote
 

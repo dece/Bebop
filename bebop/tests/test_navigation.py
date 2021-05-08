@@ -79,7 +79,7 @@ class TestNavigation(unittest.TestCase):
             self.assertEqual(
                 remove_dot_segments(path),
                 expected,
-                msg=f"path was " + path
+                msg="path was " + path
             )
 
     def test_remove_last_segment(self):
@@ -123,7 +123,7 @@ class TestNavigation(unittest.TestCase):
             self.assertEqual(
                 get_parent_url(url),
                 parent,
-                msg=f"URL was " + url)
+                msg="URL was " + url)
 
     def test_get_root_url(self):
         urls_and_roots = [
@@ -140,5 +140,5 @@ class TestNavigation(unittest.TestCase):
             self.assertEqual(
                 get_root_url(url), 
                 root, 
-                msg=f"URL was " + url
+                msg="URL was " + url
             )

@@ -4,7 +4,7 @@ TODO                                    DONE
                                         links
                                         redirections
                                         web links
-                                        history (back/forward)
+                                        history (back)
                                         simple caching
                                         simple text files
                                         encodings
@@ -14,21 +14,26 @@ TODO                                    DONE
                                         configuration
                                         help page
                                         TOFU
-open last download
+                                        view history
+                                        open last download
+                                        media files
 home page
-media files
-view history
 identity management
 --------------------------------------------------------------------------------
 BACKLOG
 click on links to open them
 download to disk, not in memory
+download in the background
+download view instead of last download
 does encoding really work? cf. egsam
 margins / centering
 pre blocks folding
 buffers (tabs)
+a11y? tts?
 handle soft-hyphens on wrapping
 bug: combining chars reduce lengths
 non shit command-line
 response code 11 (if still there)
 gopher?
+save history
+history (forward) (useful?)

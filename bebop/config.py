@@ -10,6 +10,8 @@ DEFAULT_CONFIG = {
     "source_editor": ["vi"],
     "command_editor": ["vi"],
     "history_limit": 1000,
+    "external_commands": {},
+    "external_command_default": ["xdg-open"]
 }
 
 
