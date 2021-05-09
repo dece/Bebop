@@ -29,7 +29,7 @@ def get_user_data_path() -> Path:
 
 @lru_cache(None)
 def get_downloads_path() -> Path:
-    """Return the user downloads directory path."""
+    """Return the user downloads directory path (fallbacks to home dir)."""
     xdg_config_path = Path(getenv("XDG_CONFIG_HOME", expanduser("~/.config")))
     download_path = ""
     try:

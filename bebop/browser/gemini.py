@@ -175,7 +175,8 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             text = response.content.decode("utf-8", errors="replace")
             page = Page.from_text(text)
     else:
-        filepath = _get_download_path(url)
+        download_dir = browser.config["download_path"]
+        filepath = _get_download_path(url, download_dir=download_dir)
 
     # If a page has been produced, load it. Else if a file has been retrieved,
     # download it.
@@ -200,16 +201,18 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
     return False
 
 
-def _get_download_path(url: str) -> Path:
+def _get_download_path(url: str, download_dir: Optional[str] =None) -> Path:
     """Try to find the best download file path possible from this URL."""
-    download_dir = get_downloads_path()
+    download_path = Path(download_dir) if download_dir else get_downloads_path()
+    if not download_path.exists():
+        download_path.mkdir(parents=True)
     url_parts = url.rsplit("/", maxsplit=1)
     if url_parts:
         filename = url_parts[-1]
     else:
         filename = url.split("://")[1] if "://" in url else url
         filename = filename.replace("/", "_")
-    return download_dir / filename
+    return download_path / filename
 
 
 def _handle_input_request(browser: Browser, from_url: str, message: str =None):

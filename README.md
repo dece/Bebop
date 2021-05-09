@@ -77,6 +77,7 @@ Here are the available options:
 |----------------------------|--------------|----------------|---------------------------------------|
 | `connect_timeout`          | int          | 10             | Seconds before connection times out.  |
 | `text_width`               | int          | 80             | Rendered line length.                 |
+| `download_path`            | string       |                | Download path.                        |
 | `source_editor`            | string list  | `["vi"]`       | Command to use for editing sources.   |
 | `command_editor`           | string list  | `["vi"]`       | Command to use for editing CLI input. |
 | `history_limit`            | int          | 1000           | Maximum entries in history.           |

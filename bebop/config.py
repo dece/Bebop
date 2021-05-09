@@ -7,6 +7,7 @@ import os.path
 DEFAULT_CONFIG = {
     "connect_timeout": 10,
     "text_width": 80,
+    "download_path": "",
     "source_editor": ["vi"],
     "command_editor": ["vi"],
     "history_limit": 1000,
