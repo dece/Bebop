@@ -33,7 +33,10 @@ class PagePad:
         if x <= 0 or y <= 0:
             return
         content_position = self.current_line, self.current_column
-        self.pad.refresh(*content_position, 0, 0, x, y)
+        try:
+            self.pad.refresh(*content_position, 0, 0, x, y)
+        except curses.error:
+            pass
 
     def scroll_v(self, num_lines: int, window_height: int =0):
         """Make the content pad scroll up and down by num_lines.
