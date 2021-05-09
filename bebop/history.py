@@ -54,4 +54,4 @@ class History:
                 continue
             urls.append(url)
             seen.add(url)
-        return "\n".join("=> " + url for url in urls)
+        return "# History\n\n" + "\n".join("=> " + url for url in urls)
