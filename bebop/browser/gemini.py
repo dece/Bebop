@@ -1,10 +1,17 @@
 """Gemini-related features of the browser."""
 
 from pathlib import Path
+from typing import Optional
 
 from bebop.browser.browser import Browser
 from bebop.command_line import CommandLine
-from bebop.fs import get_downloads_path
+from bebop.fs import (
+    get_downloads_path, get_identities_path, get_identities_list_path
+)
+from bebop.identity import (
+    ClientCertificateException, create_certificate, get_cert_and_key,
+    get_identities_for_url, load_identities, save_identities
+)
 from bebop.navigation import set_parameter
 from bebop.page import Page
 from bebop.protocol import Request, Response
@@ -14,7 +21,13 @@ from bebop.tofu import trust_fingerprint, untrust_fingerprint, WRONG_FP_ALERT
 MAX_URL_LEN = 1024
 
 
-def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
+def open_gemini_url(
+    browser: Browser,
+    url: str,
+    redirects: int =0,
+    use_cache: bool =True,
+    identity=None
+) -> Optional[str]:
     """Open a Gemini URL and set the formatted response as content.
 
     While the specification is not set in stone, every client takes a slightly
@@ -27,7 +40,7 @@ def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
     - STATE_INVALID_CERT: the certificate has non-fatal issues; we may
       present the user the problems found and let her decide whether to trust
       temporarily the certificate or not BUT we currently do not parse the
-      certificate's fields, so this state is never used.
+      certificate's fields, not even the pubkey, so this state is never used.
     - STATE_UNKNOWN_CERT: the certificate is valid but has not been seen before;
       as we're doing TOFU here, we could automatically trust it or let the user
       choose. For simplicity, we always trust it permanently.
@@ -37,23 +50,27 @@ def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
     - url: a valid URL with Gemini scheme to open.
     - redirects: current amount of redirections done to open the initial URL.
     - use_cache: if true, look up if the page is cached before requesting it.
+    - identity: if not None, a tuple of paths to a client cert/key to use.
 
     Returns:
-    True on success, False otherwise.
+    The final successfully handled URL on success, None otherwise. Redirected
+    URLs are not returned.
     """
     if len(url) >= MAX_URL_LEN:
         browser.set_status_error("Request URL too long.")
-        return
+        return None
 
-    browser.set_status(f"Loading {url}")
+    loading_message_verb = "Loading" if redirects == 0 else "Redirecting to"
+    loading_message = f"{loading_message_verb} {url}…"
+    browser.set_status(loading_message)
 
     if use_cache and url in browser.cache:
         browser.load_page(browser.cache[url])
         browser.current_url = url
         browser.set_status(url)
-        return True
+        return url
 
-    req = Request(url, browser.stash)
+    req = Request(url, browser.stash, identity=identity)
     connect_timeout = browser.config["connect_timeout"]
     connected = req.connect(connect_timeout)
     if not connected:
@@ -68,7 +85,7 @@ def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
         else:
             error = f"Connection failed ({url})."
         browser.set_status_error(error)
-        return False
+        return None
 
     if req.state == Request.STATE_INVALID_CERT:
         pass
@@ -87,11 +104,11 @@ def open_gemini_url(browser: Browser, url, redirects=0, use_cache=True):
     data = req.proceed()
     if not data:
         browser.set_status_error(f"Server did not respond in time ({url}).")
-        return False
+        return None
     response = Response.parse(data)
     if not response:
         browser.set_status_error(f"Server response parsing failed ({url}).")
-        return False
+        return None
 
     return _handle_response(browser, response, url, redirects)
 
@@ -116,26 +133,42 @@ def _handle_untrusted_cert(browser: Browser, request: Request):
     browser.load_page(alert_page)
 
 
-def _handle_response(browser: Browser, response: Response, url: str,
-                     redirects: int):
+def _handle_response(
+    browser: Browser,
+    response: Response,
+    url: str,
+    redirects: int
+) -> Optional[str]:
     """Handle a response from a Gemini server.
 
     Returns:
-    True on success, False otherwise.
+    The final URL on success, None otherwise.
     """
     if response.code == 20:
         return _handle_successful_response(browser, response, url)
     elif response.generic_code == 30 and response.meta:
-        browser.open_url(response.meta, base_url=url, redirects=redirects + 1)
+        # On redirections, we go back to open_url as the redirection may be to
+        # another protocol. Discard the result of this request.
+        browser.open_url(
+            response.meta,
+            base_url=url,
+            redirects=redirects + 1
+        )
     elif response.generic_code in (40, 50):
         error = f"Server error: {response.meta or Response.code.name}"
         browser.set_status_error(error)
     elif response.generic_code == 10:
-        _handle_input_request(browser, url, response.meta)
+        return _handle_input_request(browser, url, response.meta)
+    elif response.code == 60:
+        return _handle_cert_required(browser, response, url, redirects)
+    elif response.code in (61, 62):
+        details = response.meta or Response.code.name
+        error = f"Client certificate error: {details}"
+        browser.set_status_error(error)
     else:
         error = f"Unhandled response code {response.code}"
         browser.set_status_error(error)
-    return False
+    return None
 
 
 def _handle_successful_response(browser: Browser, response: Response, url: str):
@@ -155,7 +188,7 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
     - response: a successful Response.
 
     Returns:
-    True on success, False otherwise.
+    The successfully handled URL on success, None otherwise.
     """
     # Use appropriate response parser according to the MIME type.
     mime_type = response.get_mime_type()
@@ -185,7 +218,7 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
         browser.current_url = url
         browser.cache[url] = page
         browser.set_status(url)
-        return True
+        return url
     elif filepath:
         try:
             with open(filepath, "wb") as download_file:
@@ -195,10 +228,10 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
         else:
             browser.set_status(f"Downloaded {url} ({mime_type.short}).")
             browser.last_download = mime_type, filepath
-            return True
+            return url
     elif error:
         browser.set_status_error(error)
-    return False
+    return None
 
 
 def _get_download_path(url: str, download_dir: Optional[str] =None) -> Path:
@@ -215,8 +248,16 @@ def _get_download_path(url: str, download_dir: Optional[str] =None) -> Path:
     return download_path / filename
 
 
-def _handle_input_request(browser: Browser, from_url: str, message: str =None):
-    """Focus command-line to pass input to the server."""
+def _handle_input_request(
+    browser: Browser,
+    from_url: str,
+    message: str =None
+) -> Optional[str]:
+    """Focus command-line to pass input to the server.
+
+    Returns:
+    The result of `open_gemini_url` with the new request including user input.
+    """
     if message:
         browser.set_status(f"Input needed: {message}")
     else:
@@ -225,12 +266,81 @@ def _handle_input_request(browser: Browser, from_url: str, message: str =None):
     if not user_input:
         return
     url = set_parameter(from_url, user_input)
-    open_gemini_url(browser, url)
+    return open_gemini_url(browser, url)
+
+
+def _handle_cert_required(
+    browser: Browser,
+    response: Response,
+    url: str,
+    redirects: int
+) -> Optional[str]:
+    """Find a matching identity and resend the request with it.
+
+    Returns:
+    The result of `open_gemini_url` with the client certificate provided.
+    """
+    identities = load_identities(get_identities_list_path())
+    if isinstance(identities, str):
+        browser.set_status_error(f"Can't load identities: {identities}")
+        return None
+
+    url_identities = get_identities_for_url(identities, url)
+    if not url_identities:
+        identity = create_identity(browser, url)
+        if not identity:
+            return None
+        identities[url] = [identity]
+        save_identities(identities, get_identities_list_path())
+    else:
+        # TODO support multiple identities; for now we just use the first
+        # available.
+        identity = url_identities[0]
+
+    cert_path, key_path = get_cert_and_key(identity["id"])
+    return open_gemini_url(
+        browser,
+        url,
+        redirects=redirects + 1,
+        use_cache=False,
+        identity=(cert_path, key_path)
+    )
+
+
+def create_identity(browser: Browser, url: str):
+    """Walk the user through identity creation.
+
+    Returns:
+    The created identity on success (already registered in identities
+    """
+    key = browser.prompt("Create client certificate? [y/n]", "yn")
+    if key != "y":
+        browser.reset_status()
+        return None
+
+    common_name = browser.get_user_text_input(
+        "Name? The server will see this, you can leave it empty.",
+        CommandLine.CHAR_TEXT,
+        strip=True,
+    )
+    if not common_name:
+        browser.reset_status()
+        return None
+
+    browser.set_status("Generating certificate…")
+    try:
+        mangled_name = create_certificate(url, common_name)
+    except ClientCertificateException as exc:
+        browser.set_status_error(exc.message)
+        return None
+
+    browser.reset_status()
+    return {"name": common_name, "id": mangled_name}
 
 
 def forget_certificate(browser: Browser, hostname: str):
     """Remove the fingerprint associated to this hostname for the cert stash."""
-    key = browser.prompt(f"Remove fingerprint from {hostname}? [y/N]", "ynN")
+    key = browser.prompt(f"Remove fingerprint for {hostname}? [y/n]", "yn")
     if key != "y":
         browser.reset_status()
         return

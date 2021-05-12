@@ -58,7 +58,7 @@ class Request:
     # Connection failed.
     STATE_CONNECTION_FAILED = 7
 
-    def __init__(self, url, cert_stash):
+    def __init__(self, url, cert_stash, identity=None):
         self.url = url
         self.cert_stash = cert_stash
         self.state = Request.STATE_INIT
@@ -67,6 +67,7 @@ class Request:
         self.ssock = None
         self.cert_validation = None
         self.error = ""
+        self.identity = identity
 
     def connect(self, timeout: int) -> bool:
         """Connect to a Gemini server and return a RequestEventType.
@@ -120,6 +121,7 @@ class Request:
           check the whole cert fingerprint. Here it is considered the same as a
           valid certificate.
         """
+        # Get hostname and port from the URL.
         url_parts = GEMINI_URL_RE.match(self.url)
         if not url_parts:
             self.state = Request.STATE_INVALID_URL
@@ -136,6 +138,7 @@ class Request:
             port = 1965
         self.hostname = hostname
 
+        # Prepare the Gemini request.
         try:
             self.payload = self.url.encode()
         except ValueError:
@@ -143,6 +146,7 @@ class Request:
             return False
         self.payload += LINE_TERM
 
+        # Connect to the server.
         try:
             sock = socket.create_connection((hostname, port), timeout=timeout)
         except OSError as exc:
@@ -150,7 +154,10 @@ class Request:
             self.error = exc.strerror
             return False
 
+        # Setup TLS.
         context = Request.get_ssl_context()
+        if self.identity:
+            context.load_cert_chain(*self.identity)
         try:
             self.ssock = context.wrap_socket(sock, server_hostname=hostname)
         except OSError as exc:
@@ -159,6 +166,7 @@ class Request:
             self.error = exc.strerror
             return False
 
+        # Validate server certificate.
         der = self.ssock.getpeercert(binary_form=True)
         self.cert_validation = validate_cert(der, hostname, self.cert_stash)
         cert_status = self.cert_validation["status"]

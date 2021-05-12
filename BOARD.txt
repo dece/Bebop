@@ -17,8 +17,9 @@ TODO                                    DONE
                                         view history
                                         open last download
                                         media files
+                                        identity management
 home page
-identity management
+logging
 --------------------------------------------------------------------------------
 BACKLOG
 click on links to open them
@@ -37,3 +38,6 @@ response code 11 (if still there)
 gopher?
 save history
 history (forward) (useful?)
+bug: can't reload bebop: pages
+bug: can't input unicode
+bug: astrobotany loops on /app

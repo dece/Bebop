@@ -57,8 +57,8 @@ confident enough before trusting this new certificate.
 ### How to ensure this new certificate can be trusted?
 
 Can you join the owner through mail or instant messaging? This is the simplest \
-way for you to make sure that the server is fine, and maybe alert the owner on \
-a problem on his server she did not notice.
+way for you to make sure that the server is fine, and maybe alert the server \
+owner that there might be an issue.
 """
 
 
@@ -68,7 +68,7 @@ def get_cert_stash_path() -> Path:
 
 
 def load_cert_stash(stash_path: Path) -> Optional[Dict]:
-    """Load the certificate stash from the file, or None on error.
+    """Return the certificate stash from the file, or None on error.
 
     The stash is a dict with host names as keys and tuples as values. Tuples
     have four elements:

@@ -35,7 +35,7 @@ class TestNavigation(unittest.TestCase):
 
         # No scheme nor netloc but we should pretend having an absolute URL.
         res = parse_url("dece.space/parse-me.gmi", absolute=True)
-        self.assertEqual(res["scheme"], "gemini")
+        self.assertIsNone(res["scheme"])
         self.assertEqual(res["netloc"], "dece.space")
         self.assertEqual(res["path"], "/parse-me.gmi")
 

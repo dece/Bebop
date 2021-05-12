@@ -19,7 +19,10 @@ def main():
     config_path = get_config_path()
     config = load_config(config_path)
 
-    ensure_bebop_files_exist()
+    bebop_files_error = ensure_bebop_files_exist()
+    if bebop_files_error:
+        print("Bebop could not create local files:", bebop_files_error)
+        return
 
     cert_stash_path = get_cert_stash_path()
     cert_stash = load_cert_stash(cert_stash_path) or {}

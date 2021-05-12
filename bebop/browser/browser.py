@@ -86,6 +86,11 @@ class Browser:
         self._current_url = url
         self.set_status(url)
 
+    @property
+    def current_scheme(self):
+        """Return the scheme of the current URL."""
+        return parse_url(self._current_url)["scheme"] or ""
+
     def setup_special_pages(self):
         """Return a dict with the special pages functions."""
         return {
@@ -295,6 +300,15 @@ class Browser:
             from bebop.browser.gemini import forget_certificate
             forget_certificate(self, words[1])
 
+    def get_user_text_input(self, status_text, char, prefix="", strip=False):
+        """Get user input from the command-line."""
+        self.set_status(status_text)
+        result = self.command_line.focus(char, prefix=prefix)
+        self.reset_status()
+        if strip:
+            result = result.strip()
+        return result
+
     def open_url(self, url, base_url=None, redirects=0, assume_absolute=False,
                  history=True, use_cache=True):
         """Try to open an URL.
@@ -318,12 +332,14 @@ class Browser:
             self.set_status_error(f"Too many redirections ({url}).")
             return
 
+        current_scheme = self.current_scheme or "gemini"
         if assume_absolute or not self.current_url:
-            parts = parse_url(url, absolute=True, default_scheme="gemini")
+            parts = parse_url(url, absolute=True, default_scheme=current_scheme)
         else:
-            parts = parse_url(url)
+            parts = parse_url(url, default_scheme=current_scheme)
 
-        if parts["scheme"] is None and parts["netloc"] is None:
+        # If there is a no netloc part, try to join the URL.
+        if parts["netloc"] is None and parts["scheme"] == current_scheme:
             base_url = base_url or self.current_url
             if base_url:
                 parts = parse_url(join_url(base_url, url))
@@ -331,10 +347,10 @@ class Browser:
                 self.set_status_error(f"Can't open '{url}'.")
                 return
 
-        # Replace URL passed as parameter by a proper absolute one.
+        # Replace URL passed as parameter by a sanitized one.
         url = unparse_url(parts)
 
-        scheme = parts["scheme"] or ""
+        scheme = parts["scheme"]
         if scheme == "gemini":
             from bebop.browser.gemini import open_gemini_url
             success = open_gemini_url(
@@ -523,17 +539,15 @@ class Browser:
         """Add the current URL as bookmark."""
         if not self.current_url:
             return
-        self.set_status("Bookmark title?")
         current_title = self.page_pad.current_page.title or ""
-        title = self.command_line.focus(
+        title = self.get_user_text_input(
+            "Bookmark title?",
             CommandLine.CHAR_TEXT,
-            prefix=current_title
+            prefix=current_title,
+            strip=True,
         )
         if title:
-            title = title.strip()
-            if title:
-                save_bookmark(self.current_url, title)
-        self.reset_status()
+            save_bookmark(self.current_url, title)
 
     def edit_page(self):
         """Open a text editor to edit the page source.

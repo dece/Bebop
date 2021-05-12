@@ -5,6 +5,7 @@ import curses.ascii
 import curses.textpad
 import os
 import tempfile
+from typing import Optional
 
 from bebop.external import open_external_program
 from bebop.links import Links
@@ -38,7 +39,7 @@ class CommandLine:
         self.window.clear()
         self.window.refresh()
 
-    def gather(self):
+    def gather(self) -> str:
         """Return the string currently written by the user in command line.
 
         This doesn't count the command char used, but it includes then prefix.
@@ -46,7 +47,13 @@ class CommandLine:
         """
         return self.textbox.gather()[1:].rstrip()
 
-    def focus(self, command_char, validator=None, prefix=""):
+    def focus(
+        self,
+        command_char,
+        validator=None,
+        prefix="",
+        escape_to_none=False
+    ) -> Optional[str]:
         """Give user focus to the command bar.
 
         Show the command char and give focus to the command textbox. The
@@ -58,10 +65,12 @@ class CommandLine:
         - validator: function to use to validate the input chars; if omitted,
           `validate_common_input` is used.
         - prefix: string to insert before the cursor in the command line.
+        - escape_to_none: if True, an escape interruption returns None instead
+          of an empty string.
 
         Returns:
         User input as string. The string will be empty if the validator raised
-        an EscapeInterrupt.
+        an EscapeInterrupt, unless `escape_to_none` is True.
         """
         validator = validator or self._validate_common_input
         self.window.clear()
@@ -71,7 +80,7 @@ class CommandLine:
         try:
             command = self.textbox.edit(validator)
         except EscapeCommandInterrupt:
-            command = ""
+            command = "" if not escape_to_none else None
         except TerminateCommandInterrupt as exc:
             command = exc.command
         else:

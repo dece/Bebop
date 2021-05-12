@@ -8,6 +8,7 @@ from functools import lru_cache
 from os import getenv
 from os.path import expanduser
 from pathlib import Path
+from typing import Optional
 
 
 APP_NAME = "bebop"
@@ -47,9 +48,36 @@ def get_downloads_path() -> Path:
     return Path.home()
 
 
-def ensure_bebop_files_exist():
-    """Ensure various Bebop's files or directories are present."""
-    # Ensure the user data directory exists.
-    user_data_path = get_user_data_path()
-    if not user_data_path.exists():
-        user_data_path.mkdir(parents=True)
+@lru_cache(None)
+def get_identities_list_path():
+    """Return the identities JSON file path."""
+    return get_user_data_path() / "identities.json"
+
+
+@lru_cache(None)
+def get_identities_path():
+    """Return the directory where identities are stored."""
+    return get_user_data_path() / "identities"
+
+
+def ensure_bebop_files_exist() -> Optional[str]:
+    """Ensure various Bebop's files or directories are present.
+
+    Returns:
+    None if all files and directories are present, an error string otherwise.
+    """
+    try:
+        # Ensure the user data directory exists.
+        user_data_path = get_user_data_path()
+        if not user_data_path.exists():
+            user_data_path.mkdir(parents=True)
+        # Ensure the identities file and directory exists.
+        identities_file_path = get_identities_list_path()
+        if not identities_file_path.exists():
+            with open(identities_file_path, "wt") as identities_file:
+                identities_file.write("{}")
+        identities_path = get_identities_path()
+        if not identities_path.exists():
+            identities_path.mkdir(parents=True)
+    except OSError as exc:
+        return str(exc)
