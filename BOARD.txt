@@ -48,3 +48,4 @@ gopher?
 opt. maintain history between sessions
 history (forward) (useful?)
 search in page (ugh)
+get/set config using command-line

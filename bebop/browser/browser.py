@@ -17,8 +17,8 @@ from bebop.bookmarks import (
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
-from bebop.help import HELP_PAGE
 from bebop.fs import get_identities_list_path
+from bebop.help import get_help
 from bebop.history import History
 from bebop.identity import load_identities
 from bebop.links import Links
@@ -593,7 +593,7 @@ class Browser:
 
     def open_help(self):
         """Show the help page."""
-        self.open_internal_page("help", HELP_PAGE)
+        self.open_internal_page("help", get_help(self.config))
 
     def prompt(self, text, keys):
         """Display the text and allow it to type one of the given keys."""

@@ -46,4 +46,18 @@ with arguments by pressing the corresponding keybind above.
 * o/open <url>: open this URL
 * forget_certificate <hostname>: remove saved fingerprint for the hostname
 * q/quit: well, quit
+
+## Configuration
+
+The current configuration is:
+
+{config_list}
 """
+
+
+def get_help(config):
+    config_list = "\n".join(
+        f"* {key} = {value}"
+        for key, value in config.items()
+    )
+    return HELP_PAGE.format(config_list=config_list)
