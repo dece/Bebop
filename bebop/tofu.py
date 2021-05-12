@@ -5,6 +5,7 @@ requires more clarity both in specification and in our own implementation.
 """
 
 import hashlib
+import logging
 import re
 from enum import Enum
 from pathlib import Path
@@ -105,7 +106,7 @@ def save_cert_stash(stash: dict, stash_path: Path):
                 entry_line = f"{name} {algo} {fingerprint}\n"
                 stash_file.write(entry_line)
     except (OSError, ValueError) as exc:
-        print(f"Failed to save certificate stash '{stash_path}': {exc}")
+        logging.error(f"Failed to save certificate stash '{stash_path}': {exc}")
 
 
 class CertStatus(Enum):

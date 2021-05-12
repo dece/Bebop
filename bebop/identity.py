@@ -24,6 +24,7 @@ The identity file and the identities dict both have the following format:
 
 import hashlib
 import json
+import logging
 import secrets
 import string
 import subprocess
@@ -40,6 +41,7 @@ def load_identities(identities_path: Path) -> Optional[dict]:
         with open(identities_path, "rt") as identities_file:
             identities = json.load(identities_file)
     except (OSError, ValueError) as exc:
+        logging.error(f"Failed to load identities '{identities_path}': {exc}")
         return None
     return identities
 
@@ -50,6 +52,7 @@ def save_identities(identities: dict, identities_path: Path):
         with open(identities_path, "wt") as identities_file:
             json.dump(identities, identities_file)
     except (OSError, ValueError) as exc:
+        logging.error(f"Failed to save identities '{identities_path}': {exc}")
         return False
     return True
 

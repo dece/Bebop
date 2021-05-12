@@ -1,5 +1,6 @@
 """Gemini-related features of the browser."""
 
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -77,6 +78,10 @@ def open_gemini_url(
         browser.set_status(url)
         return url
 
+    logging.info(
+        f"Request {url}"
+        + (f" using cert and key {cert_and_key}" if cert_and_key else "")
+    )
     req = Request(url, browser.stash, identity=cert_and_key)
     connect_timeout = browser.config["connect_timeout"]
     connected = req.connect(connect_timeout)
@@ -151,6 +156,7 @@ def _handle_response(
     Returns:
     The final URL on success, None otherwise.
     """
+    logging.info(f"Response {response.code} {response.meta}")
     if response.code == 20:
         return _handle_successful_response(browser, response, url)
     elif response.generic_code == 30 and response.meta:

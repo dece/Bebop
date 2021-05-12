@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from bebop.browser.browser import Browser
 from bebop.config import load_config
@@ -9,7 +10,17 @@ from bebop.tofu import get_cert_stash_path, load_cert_stash, save_cert_stash
 def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("url", nargs="?", default=None)
+    argparser.add_argument("-d", "--debug", action="store_true")
     args = argparser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(
+            filename="bebop.log",
+            level=logging.DEBUG,
+            format="%(asctime)s %(levelname)-8s %(message)s"
+        )
+    else:
+        logging.disable()
 
     if args.url:
         start_url = args.url
@@ -21,7 +32,7 @@ def main():
 
     bebop_files_error = ensure_bebop_files_exist()
     if bebop_files_error:
-        print("Bebop could not create local files:", bebop_files_error)
+        logging.critical(f"Failed to create files: {bebop_files_error}")
         return
 
     cert_stash_path = get_cert_stash_path()

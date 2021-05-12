@@ -3,12 +3,13 @@
 import curses
 import curses.ascii
 import curses.textpad
+import logging
 import os
 import subprocess
 import tempfile
 from math import inf
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from bebop.bookmarks import (
     get_bookmarks_path, get_bookmarks_document, save_bookmark
@@ -113,6 +114,7 @@ class Browser:
     def run(self, *args, **kwargs):
         """Use curses' wrapper around _run."""
         os.environ.setdefault("ESCDELAY", "25")
+        logging.info("Cursing…")
         curses.wrapper(self._run, *args, **kwargs)
 
     def _run(self, stdscr, start_url=None):
@@ -259,6 +261,7 @@ class Browser:
     def refresh_status_line(self):
         """Refresh status line contents."""
         text, pair, attributes = self.status_data
+        logging.debug("Status: " + text)
         text = text[:self.w - 1]
         color = curses.color_pair(pair)
         self.status_line.addstr(0, 0, text, color | attributes)
