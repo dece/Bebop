@@ -17,7 +17,9 @@ from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
 from bebop.help import HELP_PAGE
+from bebop.fs import get_identities_list_path
 from bebop.history import History
+from bebop.identity import load_identities
 from bebop.links import Links
 from bebop.mime import MimeType
 from bebop.mouse import ButtonState
@@ -41,14 +43,15 @@ class Browser:
     - command_line: a CommandLine object for the user to interact with.
     - running: the browser will continue running while this is true.
     - status_data: 3-uple of status text, color pair and attributes of the
-      status line, used to reset status after an error.
+        status line, used to reset status after an error.
     - history: an History object.
-    - cache: a dict containing cached pages
+    - cache: a dict containing cached pages.
     - special_pages: a dict containing page names used with "bebop" scheme;
-      values are dicts as well: the "open" key maps to a callable to use when
-      the page is accessed, and the optional "source" key maps to callable
-      returning the page source path.
+        values are dicts as well: the "open" key maps to a callable to use when
+        the page is accessed, and the optional "source" key maps to callable
+        returning the page source path.
     - last_download: tuple of MimeType and path, or None.
+    - identities: identities map.
     """
 
     def __init__(self, config, cert_stash):
@@ -65,6 +68,7 @@ class Browser:
         self.cache = {}
         self.special_pages = self.setup_special_pages()
         self.last_download: Optional[Tuple[MimeType, Path]] = None
+        self.identities = load_identities(get_identities_list_path()) or {}
         self._current_url = ""
 
     @property

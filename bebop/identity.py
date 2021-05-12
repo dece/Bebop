@@ -33,24 +33,24 @@ from typing import Optional, Union
 from bebop.fs import get_identities_path, get_user_data_path
 
 
-def load_identities(identities_path: Path) -> Union[dict, str]:
-    """Return saved identities, else an error str."""
+def load_identities(identities_path: Path) -> Optional[dict]:
+    """Return saved identities or None on error."""
     identities = {}
     try:
         with open(identities_path, "rt") as identities_file:
             identities = json.load(identities_file)
     except (OSError, ValueError) as exc:
-        return f"Failed to load identities '{identities_path}': {exc}"
+        return None
     return identities
 
 
 def save_identities(identities: dict, identities_path: Path):
-    """Save the certificate stash. Return True on success, else an error str."""
+    """Save the certificate stash. Return True on success."""
     try:
         with open(identities_path, "wt") as identities_file:
             json.dump(identities, identities_file)
     except (OSError, ValueError) as exc:
-        return f"Failed to save identities '{identities_path}': {exc}"
+        return False
     return True
 
 
@@ -102,8 +102,8 @@ def create_certificate(url: str, common_name: str):
     try:
         subprocess.check_call(
             command,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError as exc:
         error = "Could not create certificate: " + str(exc)

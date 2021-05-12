@@ -26,7 +26,7 @@ def open_gemini_url(
     url: str,
     redirects: int =0,
     use_cache: bool =True,
-    identity=None
+    cert_and_key=None
 ) -> Optional[str]:
     """Open a Gemini URL and set the formatted response as content.
 
@@ -50,7 +50,7 @@ def open_gemini_url(
     - url: a valid URL with Gemini scheme to open.
     - redirects: current amount of redirections done to open the initial URL.
     - use_cache: if true, look up if the page is cached before requesting it.
-    - identity: if not None, a tuple of paths to a client cert/key to use.
+    - cert_and_key: if not None, a tuple of paths to a client cert/key to use.
 
     Returns:
     The final successfully handled URL on success, None otherwise. Redirected
@@ -64,13 +64,20 @@ def open_gemini_url(
     loading_message = f"{loading_message_verb} {url}…"
     browser.set_status(loading_message)
 
+    # If this URL used to request an identity, provide it.
+    if not cert_and_key:
+        url_identities = get_identities_for_url(browser.identities, url)
+        identity = select_identity(url_identities)
+        if identity:
+            cert_and_key = get_cert_and_key(identity["id"])
+
     if use_cache and url in browser.cache:
         browser.load_page(browser.cache[url])
         browser.current_url = url
         browser.set_status(url)
         return url
 
-    req = Request(url, browser.stash, identity=identity)
+    req = Request(url, browser.stash, identity=cert_and_key)
     connect_timeout = browser.config["connect_timeout"]
     connected = req.connect(connect_timeout)
     if not connected:
@@ -281,21 +288,20 @@ def _handle_cert_required(
     The result of `open_gemini_url` with the client certificate provided.
     """
     identities = load_identities(get_identities_list_path())
-    if isinstance(identities, str):
-        browser.set_status_error(f"Can't load identities: {identities}")
+    if not identities:
+        browser.set_status_error(f"Can't load identities.")
         return None
+    browser.identities = identities
 
-    url_identities = get_identities_for_url(identities, url)
+    url_identities = get_identities_for_url(browser.identities, url)
     if not url_identities:
         identity = create_identity(browser, url)
         if not identity:
             return None
-        identities[url] = [identity]
-        save_identities(identities, get_identities_list_path())
+        browser.identities[url] = [identity]
+        save_identities(browser.identities, get_identities_list_path())
     else:
-        # TODO support multiple identities; for now we just use the first
-        # available.
-        identity = url_identities[0]
+        identity = select_identity(url_identities)
 
     cert_path, key_path = get_cert_and_key(identity["id"])
     return open_gemini_url(
@@ -303,8 +309,14 @@ def _handle_cert_required(
         url,
         redirects=redirects + 1,
         use_cache=False,
-        identity=(cert_path, key_path)
+        cert_and_key=(cert_path, key_path)
     )
+
+
+def select_identity(identities: list):
+    """Let user select the appropriate identity among candidates."""
+    # TODO support multiple identities; for now we just use the first available.
+    return identities[0] if identities else None
 
 
 def create_identity(browser: Browser, url: str):
