@@ -30,7 +30,6 @@ click on links to open them
 bug: can't reload bebop: pages
 bug: exiting editor breaks curses
 dumb rendering mode per site
-disable cache per site
 well, preferences per site maybe?
 download without memory buffer
 download in the background

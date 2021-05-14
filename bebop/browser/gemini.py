@@ -26,7 +26,7 @@ def open_gemini_url(
     browser: Browser,
     url: str,
     redirects: int =0,
-    use_cache: bool =True,
+    use_cache: bool =False,
     cert_and_key=None
 ) -> Optional[str]:
     """Open a Gemini URL and set the formatted response as content.
@@ -314,7 +314,6 @@ def _handle_cert_required(
         browser,
         url,
         redirects=redirects + 1,
-        use_cache=False,
         cert_and_key=(cert_path, key_path)
     )
 

@@ -317,7 +317,7 @@ class Browser:
         return result
 
     def open_url(self, url, base_url=None, redirects=0, assume_absolute=False,
-                 history=True, use_cache=True):
+                 history=True, use_cache=False):
         """Try to open an URL.
 
         This function assumes that the URL can be from an user and thus tries a
@@ -516,7 +516,7 @@ class Browser:
         else:
             previous_url = self.history.get_previous()
         if previous_url:
-            self.open_url(previous_url, history=False)
+            self.open_url(previous_url, history=False, use_cache=True)
 
     def go_to_parent_page(self):
         """Go to the parent URL if possible."""
