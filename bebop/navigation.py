@@ -20,6 +20,8 @@ URI_RE = re.compile(
     "$"
 )
 
+NO_NETLOC_SCHEMES = ("bebop",)
+
 
 class InvalidUrlException(Exception):
     """Generic exception for invalid URLs used in this module."""
@@ -45,7 +47,8 @@ def parse_url(
     - absolute: assume the URL is absolute, e.g. in the case we are trying to
       parse an URL an user has written, which is most of the time an absolute
       URL even if not perfectly so. This only has an effect if, after the
-      initial parsing, there is no netloc available.
+      initial parsing, there is no netloc available and if there is no scheme
+      that is known to not have a netloc (i.e. the dummy "bebop" scheme).
     - default_scheme: specify the scheme to use if the URL either does not
       specify it and we need it (e.g. there is a location), or `absolute` is
       true; if absolute is true but `default_scheme` is not specified, a netloc
@@ -71,7 +74,11 @@ def parse_url(
 
     # Smol hack: if we assume it's an absolute URL and no netloc has been found,
     # just prefix default scheme (if any) and "//".
-    if absolute and not parts["netloc"]:
+    if (
+        absolute
+        and not parts["netloc"]
+        and parts["scheme"] not in NO_NETLOC_SCHEMES
+    ):
         scheme = parts["scheme"] or default_scheme
         prefix = scheme + "://" if scheme else "//"
         return parse_url(prefix + url)

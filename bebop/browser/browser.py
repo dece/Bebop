@@ -12,7 +12,9 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from bebop.bookmarks import (
-    get_bookmarks_path, get_bookmarks_document, save_bookmark
+    get_bookmarks_path,
+    get_bookmarks_document,
+    save_bookmark,
 )
 from bebop.colors import ColorPair, init_colors
 from bebop.command_line import CommandLine
@@ -25,7 +27,12 @@ from bebop.links import Links
 from bebop.mime import MimeType
 from bebop.mouse import ButtonState
 from bebop.navigation import (
-    get_parent_url, get_root_url, join_url, parse_url, unparse_url
+    NO_NETLOC_SCHEMES,
+    get_parent_url,
+    get_root_url,
+    join_url,
+    parse_url,
+    unparse_url,
 )
 from bebop.page import Page
 from bebop.page_pad import PagePad
@@ -346,7 +353,11 @@ class Browser:
             parts = parse_url(url, default_scheme=current_scheme)
 
         # If there is a no netloc part, try to join the URL.
-        if parts["netloc"] is None and parts["scheme"] == current_scheme:
+        if (
+            parts["netloc"] is None
+            and parts["scheme"] == current_scheme
+            and parts["scheme"] not in NO_NETLOC_SCHEMES
+        ):
             base_url = base_url or self.current_url
             if base_url:
                 parts = parse_url(join_url(base_url, url))

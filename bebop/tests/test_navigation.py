@@ -50,6 +50,12 @@ class TestNavigation(unittest.TestCase):
         self.assertEqual(res["scheme"], "file")
         self.assertEqual(res["path"], "/home/dece/gemini/index.gmi")
 
+        # Bebop scheme.
+        res = parse_url("bebop:welcome")
+        self.assertEqual(res["scheme"], "bebop")
+        self.assertIsNone(res["netloc"])
+        self.assertEqual(res["path"], "welcome")
+
     def test_join_url(self):
         url = join_url("gemini://dece.space/", "some-file.gmi")
         self.assertEqual(url, "gemini://dece.space/some-file.gmi")
