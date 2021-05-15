@@ -27,7 +27,6 @@ BACKLOG
 --------------------------------------------------------------------------------
 bug: can't input unicode
 click on links to open them
-bug: exiting editor breaks curses
 dumb rendering mode per site
 well, preferences per site maybe?
 download without memory buffer

@@ -12,6 +12,9 @@ def open_external_program(command):
     """
     curses.nocbreak()
     curses.echo()
+    curses.curs_set(1)
     subprocess.run(command)
+    curses.mousemask(curses.ALL_MOUSE_EVENTS)
+    curses.curs_set(0)
     curses.noecho()
     curses.cbreak()
