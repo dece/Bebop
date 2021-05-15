@@ -330,7 +330,7 @@ def create_identity(browser: Browser, url: str):
     Returns:
     The created identity on success (already registered in identities
     """
-    key = browser.prompt("Create client certificate? [y/n]", "yn")
+    key = browser.prompt("Create client certificate?", "yn")
     if key != "y":
         browser.reset_status()
         return None
@@ -357,7 +357,7 @@ def create_identity(browser: Browser, url: str):
 
 def forget_certificate(browser: Browser, hostname: str):
     """Remove the fingerprint associated to this hostname for the cert stash."""
-    key = browser.prompt(f"Remove fingerprint for {hostname}? [y/n]", "yn")
+    key = browser.prompt(f"Remove fingerprint for {hostname}?", "yn")
     if key != "y":
         browser.reset_status()
         return

@@ -150,7 +150,9 @@ class Browser:
         )
 
         if start_url:
-            self.open_url(start_url, assume_absolute=True)
+            self.open_url(start_url)
+        else:
+            self.open_home()
 
         while self.running:
             try:
@@ -309,7 +311,7 @@ class Browser:
                 self.running = False
             return
         if command in ("o", "open"):
-            self.open_url(words[1], assume_absolute=True)
+            self.open_url(words[1])
         elif command == "forget-certificate":
             from bebop.browser.gemini import forget_certificate
             forget_certificate(self, words[1])
@@ -323,8 +325,8 @@ class Browser:
             result = result.strip()
         return result
 
-    def open_url(self, url, base_url=None, redirects=0, assume_absolute=False,
-                 history=True, use_cache=False):
+    def open_url(self, url, base_url=None, redirects=0, history=True,
+                 use_cache=False):
         """Try to open an URL.
 
         This function assumes that the URL can be from an user and thus tries a
@@ -338,7 +340,6 @@ class Browser:
         - url: an URL string, may not be completely compliant.
         - base_url: an URL string to use as base in case `url` is relative.
         - redirections: number of redirections we did yet for the same request.
-        - assume_absolute: assume we intended to use an absolute URL if True.
         - history: whether the URL should be pushed to history on success.
         - use_cache: whether we should look for an already cached document.
         """
@@ -347,10 +348,7 @@ class Browser:
             return
 
         current_scheme = self.current_scheme or "gemini"
-        if assume_absolute or not self.current_url:
-            parts = parse_url(url, absolute=True, default_scheme=current_scheme)
-        else:
-            parts = parse_url(url, default_scheme=current_scheme)
+        parts = parse_url(url, default_scheme=current_scheme)
 
         # If there is a no netloc part, try to join the URL.
         if (
@@ -358,10 +356,20 @@ class Browser:
             and parts["scheme"] == current_scheme
             and parts["scheme"] not in NO_NETLOC_SCHEMES
         ):
-            base_url = base_url or self.current_url
+            url_is_usable = False
+            # Join from either a given base URL, e.g. redirections or following
+            # a relative link. If there is no such reference URL, try to guess
+            # what the user meant to do.
             if base_url:
                 parts = parse_url(join_url(base_url, url))
-            else:
+                url_is_usable = True
+            elif parts["scheme"] and parts["path"]:
+                guessed_url = parts["scheme"] + "://" + parts["path"]
+                if self.prompt(f"Did you mean '{guessed_url}'?", "yn") == "y":
+                    parts = parse_url(guessed_url)
+                    url_is_usable = True
+            # If nothing could be done, just give up.
+            if not url_is_usable:
                 self.set_status_error(f"Can't open '{url}'.")
                 return
 
@@ -429,7 +437,7 @@ class Browser:
         if not link_id in links:
             self.set_status_error(f"Unknown link ID {link_id}.")
             return
-        self.open_url(links[link_id])
+        self.open_url(links[link_id], base_url=self.current_url)
 
     def handle_mouse(self, mouse_id: int, x: int, y: int, z: int, bstate: int):
         """Handle mouse events.
@@ -608,7 +616,8 @@ class Browser:
 
     def prompt(self, text, keys):
         """Display the text and allow it to type one of the given keys."""
-        self.set_status(text)
+        choice = "/".join(keys)
+        self.set_status(f"{text} [{choice}]")
         return self.command_line.prompt_key(keys)
 
     def open_history(self):

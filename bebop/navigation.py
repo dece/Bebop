@@ -31,11 +31,7 @@ class InvalidUrlException(Exception):
         self.url = url
 
 
-def parse_url(
-    url: str,
-    absolute: bool =False,
-    default_scheme: Optional[str] =None
-) -> Dict[str, Any]:
+def parse_url(url: str, default_scheme: Optional[str] =None) -> Dict[str, Any]:
     """Return URL parts from this URL.
 
     Use the RFC regex to get parts from URL. This function can be used on
@@ -44,15 +40,8 @@ def parse_url(
 
     Arguments:
     - url: URL to parse.
-    - absolute: assume the URL is absolute, e.g. in the case we are trying to
-      parse an URL an user has written, which is most of the time an absolute
-      URL even if not perfectly so. This only has an effect if, after the
-      initial parsing, there is no netloc available and if there is no scheme
-      that is known to not have a netloc (i.e. the dummy "bebop" scheme).
     - default_scheme: specify the scheme to use if the URL either does not
-      specify it and we need it (e.g. there is a location), or `absolute` is
-      true; if absolute is true but `default_scheme` is not specified, a netloc
-      marker ("//") is prefixed without scheme.
+      specify it and we need it (e.g. there is a location).
 
     Returns:
     URL parts, as a dictionary with the following keys: "scheme", "netloc",
@@ -72,18 +61,7 @@ def parse_url(
         for k in ("scheme", "netloc", "path", "query", "fragment")
     }
 
-    # Smol hack: if we assume it's an absolute URL and no netloc has been found,
-    # just prefix default scheme (if any) and "//".
-    if (
-        absolute
-        and not parts["netloc"]
-        and parts["scheme"] not in NO_NETLOC_SCHEMES
-    ):
-        scheme = parts["scheme"] or default_scheme
-        prefix = scheme + "://" if scheme else "//"
-        return parse_url(prefix + url)
-
-    # Another smol hack: if there is no scheme, use `default_scheme` as default.
+    # Smol hack: if there is no scheme, use `default_scheme` as default.
     if default_scheme and parts["scheme"] is None:
         parts["scheme"] = default_scheme
 

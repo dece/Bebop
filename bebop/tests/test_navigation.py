@@ -33,12 +33,6 @@ class TestNavigation(unittest.TestCase):
         self.assertIsNone(res["netloc"])
         self.assertEqual(res["path"], "dece.space/parse-me.gmi")
 
-        # No scheme nor netloc but we should pretend having an absolute URL.
-        res = parse_url("dece.space/parse-me.gmi", absolute=True)
-        self.assertIsNone(res["scheme"])
-        self.assertEqual(res["netloc"], "dece.space")
-        self.assertEqual(res["path"], "/parse-me.gmi")
-
         # HTTPS scheme.
         res = parse_url("https://dece.space/index.html")
         self.assertEqual(res["scheme"], "https")
