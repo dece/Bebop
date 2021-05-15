@@ -1,13 +1,13 @@
 """Help page. Currently only keybinds are shown as help."""
 
+from bebop.config import DEFAULT_CONFIG
+
 HELP_PAGE = """\
 # Help
 
 ## Keybinds
 
-Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or \
-META) key are written using the "M-" prefix. Symbol keys are written as their \
-name, not the symbol itself.
+Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or META) key are written using the "M-" prefix. Keybinds using the CTRL key are written using the "C-" prefix. Symbol keys are written as their name, not the symbol itself.
 
 * colon: focus the command-line
 * r: reload page
@@ -37,27 +37,47 @@ name, not the symbol itself.
 * y: open history
 * digits: go to the corresponding link ID
 * escape: reset status line text
+* C-c: cancel current operation
 
 ## Commands
 
-Commands are mostly for actions requiring user input. You can type a command \
-with arguments by pressing the corresponding keybind above.
+Commands are mostly for actions requiring user input. You can type a command with arguments by pressing the corresponding keybind above.
 
 * o/open <url>: open this URL
-* forget_certificate <hostname>: remove saved fingerprint for the hostname
 * q/quit: well, quit
+* h/home: open your home page
+* forget_certificate <hostname>: remove saved fingerprint for this hostname
 
 ## Configuration
 
-The current configuration is:
+Bebop uses a JSON file (usually in ~/.config). It is created with default values on first start. It is never written to afterwards: you can edit it when you want, just restart Bebop to take changes into account.
 
-{config_list}
+Here are the available options:
+
+* connect_timeout (int): seconds before connection times out.
+* text_width (int): rendered line length.
+* download_path (string): download path.
+* source_editor (see note 1): command to use for editing sources.
+* command_editor (see note 1): command to use for editing cli input.
+* history_limit (int): maximum entries in history.
+* external_commands (see note 2): commands to open various files.
+* external_command_default (see note 1): default command to open files.
+* home (string): home page.
+
+Notes:
+
+1: for the "command" parameters such as source_editor and command_editor, a string list is used to separate the different program arguments, e.g. if you wish to use `vim -c 'startinsert'`, you should write the list `["vim", "-c", "startinsert"]`. In both case, a temporary or regular file name will be appended to this command when run.
+
+2: the external_commands dict maps MIME types to commands just as above. For example, if you want to open video files with VLC and audio files in Clementine, you can use the following dict: `{"audio": ["clementine"], "video": ["vlc"]}`.  For now only "main" MIME types are supported, i.e. you cannot specify precise types like "audio/flac", just "audio".
+
+Your current configuration is:
+
 """
 
 
 def get_help(config):
     config_list = "\n".join(
-        f"* {key} = {value}"
+        f'* {key} = {value}   (default "{DEFAULT_CONFIG[key]}")'
         for key, value in config.items()
     )
-    return HELP_PAGE.format(config_list=config_list)
+    return HELP_PAGE + config_list

@@ -347,10 +347,15 @@ class Browser:
             self.set_status_error(f"Too many redirections ({url}).")
             return
 
-        current_scheme = self.current_scheme or "gemini"
+        # Take the current scheme as the default scheme to use if the URL does
+        # not specify it. If it's the bebop scheme, discard it. If there is no
+        # current scheme available, default to the gemini scheme.
+        current_scheme = self.current_scheme
+        if not current_scheme or current_scheme == "bebop":
+            current_scheme = "gemini"
         parts = parse_url(url, default_scheme=current_scheme)
 
-        # If there is a no netloc part, try to join the URL.
+        # If there is no netloc part, try to join the URL.
         if (
             parts["netloc"] is None
             and parts["scheme"] == current_scheme
@@ -365,7 +370,7 @@ class Browser:
                 url_is_usable = True
             elif parts["scheme"] and parts["path"]:
                 guessed_url = parts["scheme"] + "://" + parts["path"]
-                if self.prompt(f"Did you mean '{guessed_url}'?", "yn") == "y":
+                if self.prompt(f"Do you mean '{guessed_url}'?") == "y":
                     parts = parse_url(guessed_url)
                     url_is_usable = True
             # If nothing could be done, just give up.
@@ -614,7 +619,7 @@ class Browser:
         """Show the help page."""
         self.open_internal_page("help", get_help(self.config))
 
-    def prompt(self, text, keys):
+    def prompt(self, text: str, keys: str ="yn"):
         """Display the text and allow it to type one of the given keys."""
         choice = "/".join(keys)
         self.set_status(f"{text} [{choice}]")
