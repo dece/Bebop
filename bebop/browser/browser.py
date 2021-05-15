@@ -36,6 +36,7 @@ from bebop.navigation import (
 )
 from bebop.page import Page
 from bebop.page_pad import PagePad
+from bebop.welcome import WELCOME_PAGE
 
 
 class Browser:
@@ -106,15 +107,12 @@ class Browser:
     def setup_special_pages(self):
         """Return a dict with the special pages functions."""
         return {
+            "welcome": { "open": self.open_welcome_page },
+            "help": { "open": self.open_help },
+            "history": { "open": self.open_history },
             "bookmarks": {
                 "open": self.open_bookmarks,
                 "source": lambda: str(get_bookmarks_path())
-            },
-            "help": {
-                "open": self.open_help,
-            },
-            "history": {
-                "open": self.open_history,
             },
         }
 
@@ -309,6 +307,8 @@ class Browser:
         if num_words == 1:
             if command in ("q", "quit"):
                 self.running = False
+            elif command in ("h", "home"):
+                self.open_home()
             return
         if command in ("o", "open"):
             self.open_url(words[1])
@@ -643,3 +643,11 @@ class Browser:
             )
         except FileNotFoundError as exc:
             self.set_status_error(f"Failed to run command: {exc}")
+
+    def open_home(self):
+        """Open the home page."""
+        self.open_url(self.config["home"])
+
+    def open_welcome_page(self):
+        """Open the default welcome page."""
+        self.open_internal_page("welcome", WELCOME_PAGE)

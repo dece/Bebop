@@ -13,7 +13,8 @@ DEFAULT_CONFIG = {
     "command_editor": ["vi"],
     "history_limit": 1000,
     "external_commands": {},
-    "external_command_default": ["xdg-open"]
+    "external_command_default": ["xdg-open"],
+    "home": "bebop:welcome",
 }
 
 

@@ -19,7 +19,7 @@ TODO                                    DONE
                                         media files
                                         identity management
                                         logging
-home page
+                                        home page
 
 
 
