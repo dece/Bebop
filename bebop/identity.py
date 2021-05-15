@@ -26,12 +26,11 @@ import hashlib
 import json
 import logging
 import secrets
-import string
 import subprocess
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
-from bebop.fs import get_identities_path, get_user_data_path
+from bebop.fs import get_identities_path
 
 
 def load_identities(identities_path: Path) -> Optional[dict]:

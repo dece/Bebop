@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 from math import inf
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 from bebop.bookmarks import (
     get_bookmarks_path,

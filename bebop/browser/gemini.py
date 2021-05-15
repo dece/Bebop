@@ -6,9 +6,7 @@ from typing import Optional
 
 from bebop.browser.browser import Browser
 from bebop.command_line import CommandLine
-from bebop.fs import (
-    get_downloads_path, get_identities_path, get_identities_list_path
-)
+from bebop.fs import get_downloads_path, get_identities_list_path
 from bebop.identity import (
     ClientCertificateException, create_certificate, get_cert_and_key,
     get_identities_for_url, load_identities, save_identities
@@ -295,7 +293,7 @@ def _handle_cert_required(
     """
     identities = load_identities(get_identities_list_path())
     if not identities:
-        browser.set_status_error(f"Can't load identities.")
+        browser.set_status_error("Can't load identities.")
         return None
     browser.identities = identities
 
