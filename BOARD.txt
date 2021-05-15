@@ -1,38 +1,22 @@
-TODO                                    DONE
---------------------------------------------------------------------------------
-                                        browsing
-                                        links
-                                        redirections
-                                        web links
-                                        history (back)
-                                        simple caching
-                                        simple text files
-                                        encodings
-                                        bookmarks
-                                        view/edit sources
-                                        downloads
-                                        configuration
-                                        help page
-                                        TOFU
-                                        view history
-                                        open last download
-                                        media files
-                                        identity management
-                                        logging
-                                        home page
+TODO                                    
+----------------------------------------
+bug: can't input unicode
+bug: xterm is borked
+dumb rendering mode per site
+well, preferences per site maybe?
+does encoding really work? cf. egsam
+get/set config using command-line
+more UT
+setup.py
 
 
 
 BACKLOG
 --------------------------------------------------------------------------------
-bug: can't input unicode
 click on links to open them
-dumb rendering mode per site
-well, preferences per site maybe?
 download without memory buffer
 download in the background
 download view instead of last download
-does encoding really work? cf. egsam
 margins / centering
 pre blocks folding
 buffers (tabs)
@@ -45,6 +29,28 @@ gopher?
 opt. maintain history between sessions
 history (forward) (useful?)
 search in page (ugh)
-get/set config using command-line
-bug: xterm is borked
-more UT
+
+
+
+DONE
+--------------------------------------------------------------------------------
+browsing
+links
+redirections
+web links
+history (back)
+simple caching
+simple text files
+encodings
+bookmarks
+view/edit sources
+downloads
+configuration
+help page
+TOFU
+view history
+open last download
+media files
+identity management
+logging
+home page
