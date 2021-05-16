@@ -4,6 +4,7 @@ import curses
 import curses.ascii
 import curses.textpad
 import os
+import logging
 import tempfile
 from typing import Optional
 
@@ -108,12 +109,12 @@ class CommandLine:
         elif ch == curses.ascii.ESC:  # Could be ESC or ALT
             self.window.nodelay(True)
             ch = self.window.getch()
+            self.window.nodelay(False)
             if ch == -1:
                 raise EscapeCommandInterrupt()
             else:  # ALT keybinds.
                 if ch == ord("e"):
                     self.open_editor(self.gather())
-            self.window.nodelay(False)
         return ch
 
     def focus_for_link_navigation(self, init_char: int, links: Links):
@@ -194,6 +195,7 @@ class CommandLine:
                     temp_file.write(existing_content)
                 temp_filepath = temp_file.name
         except OSError:
+            logging.error("Could not open or write to temporary file.")
             return
 
         command = self.editor_command + [temp_filepath]
@@ -204,6 +206,7 @@ class CommandLine:
                 content = temp_file.read().rstrip("\r\n")
             os.unlink(temp_filepath)
         except OSError:
+            logging.error("Could not read temporary file after user edition.")
             return
         raise TerminateCommandInterrupt(content)
 

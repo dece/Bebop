@@ -217,6 +217,7 @@ class Browser:
         elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
             self.screen.nodelay(True)
             char = self.screen.getch()
+            self.screen.nodelay(False)
             if char == -1:
                 self.reset_status()
             else:  # ALT keybinds.
@@ -228,7 +229,6 @@ class Browser:
                     self.scroll_page_vertically(-1)
                 elif char == ord("l"):
                     self.scroll_page_horizontally(1)
-            self.screen.nodelay(False)
         # elif char == ord("@"):
         #     self.current_url = "bebop:debugzone"
         #     t = "\n".join("* " + u for u in self.history.urls)
