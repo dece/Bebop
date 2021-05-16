@@ -51,12 +51,11 @@ class Textbox:
 
     def _end_of_line(self):
         """Return the index of the last non-blank character."""
-        logging.debug(f"_end_of_line stripspaces {self.stripspaces}")
+        logging.debug(f"textpad._end_of_line")
         self._update_maxx()
         last = self.maxx
         while True:
             last_ch = curses.ascii.ascii(self.win.inch(0, last))
-            logging.debug("last_ch " + str(last_ch))
             if last_ch != curses.ascii.SP:
                 last = min(self.maxx, last + 1)
                 break
@@ -66,7 +65,7 @@ class Textbox:
         return last
 
     def _insert_printable_char(self, ch):
-        logging.debug(f"_insert_printable_char {ch}")
+        logging.debug(f"textpad._insert_printable_char {ch}")
         self._update_maxx()
         _, x = self.win.getyx()
         backx = None
@@ -94,7 +93,7 @@ class Textbox:
 
     def do_command(self, ch):
         """Process a single editing command."""
-        logging.debug(f"do_command {ch}")
+        logging.debug(f"textpad.do_command {ch}")
         self._update_maxx()
         _, x = self.win.getyx()
         if curses.ascii.isprint(ch):
@@ -121,7 +120,6 @@ class Textbox:
                 self.win.move(0, self._end_of_line())
             else:
                 self.win.move(0, self.maxx)
-            self.win.move(0, self.maxx)
         elif ch in (curses.ascii.ACK, curses.KEY_RIGHT):  # ^f
             if x < self.maxx:
                 self.win.move(0, x + 1)
