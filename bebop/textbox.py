@@ -41,24 +41,23 @@ class Textbox:
     def __init__(self, win, insert_mode=False):
         self.win = win
         self.insert_mode = insert_mode
-        self._update_max_yx()
+        self._update_maxx()
         self.stripspaces = True
-        self.lastcmd = None
         win.keypad(1)
 
-    def _update_max_yx(self):
-        maxy, maxx = self.win.getmaxyx()
-        self.maxy = maxy - 1
+    def _update_maxx(self):
+        _, maxx = self.win.getmaxyx()
         self.maxx = maxx - 1
 
     def _end_of_line(self):
-        """Go to the location of the first blank."""
-        logging.debug(f"_end_of_line")
-        self._update_max_yx()
-        logging.debug(f"_end_of_line {self.win.getyx()} {(self.maxx, self.maxy)}")
+        """Return the index of the last non-blank character."""
+        logging.debug(f"_end_of_line stripspaces {self.stripspaces}")
+        self._update_maxx()
         last = self.maxx
         while True:
-            if curses.ascii.ascii(self.win.inch(0, last)) != curses.ascii.SP:
+            last_ch = curses.ascii.ascii(self.win.inch(0, last))
+            logging.debug("last_ch " + str(last_ch))
+            if last_ch != curses.ascii.SP:
                 last = min(self.maxx, last + 1)
                 break
             elif last == 0:
@@ -68,9 +67,9 @@ class Textbox:
 
     def _insert_printable_char(self, ch):
         logging.debug(f"_insert_printable_char {ch}")
-        self._update_max_yx()
-        y, x = self.win.getyx()
-        backyx = None
+        self._update_maxx()
+        _, x = self.win.getyx()
+        backx = None
         while x < self.maxx:
             oldch = 0
             if self.insert_mode:
@@ -85,20 +84,19 @@ class Textbox:
             if not self.insert_mode or not curses.ascii.isprint(oldch):
                 break
             ch = oldch
-            y, x = self.win.getyx()
-            # Remember where to put the cursor back since we are in insert_mode
-            if backyx is None:
-                backyx = y, x
+            _, x = self.win.getyx()
+            # Remember where to put the cursor back since we are in insert_mode.
+            if backx is None:
+                backx = x
 
-        if backyx is not None:
-            self.win.move(*backyx)
+        if backx is not None:
+            self.win.move(0, backx)
 
     def do_command(self, ch):
         """Process a single editing command."""
         logging.debug(f"do_command {ch}")
-        self._update_max_yx()
+        self._update_maxx()
         _, x = self.win.getyx()
-        self.lastcmd = ch
         if curses.ascii.isprint(ch):
             if x < self.maxx:
                 self._insert_printable_char(ch)
@@ -141,15 +139,13 @@ class Textbox:
     def gather(self):
         """Collect and return the contents of the window."""
         result = ""
-        self._update_max_yx()
+        self._update_maxx()
         self.win.move(0, 0)
         stop = self._end_of_line()
         for x in range(self.maxx + 1):
             if self.stripspaces and x > stop:
                 break
             result = result + chr(curses.ascii.ascii(self.win.inch(0, x)))
-        if self.maxy > 0:
-            result = result + "\n"
         return result
 
     def edit(self, validate=None):

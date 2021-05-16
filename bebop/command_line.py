@@ -103,9 +103,10 @@ class CommandLine:
         to handle the keys above.
         """
         if ch == curses.KEY_BACKSPACE:  # Cancel input if all line is cleaned.
-            text = self.gather()
-            if len(text) == 0:
+            _, x = self.textbox.win.getyx()
+            if x == 1:
                 raise EscapeCommandInterrupt()
+            pass
         elif ch == curses.ascii.ESC:  # Could be ESC or ALT
             self.window.nodelay(True)
             ch = self.window.getch()
