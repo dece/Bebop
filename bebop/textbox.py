@@ -10,11 +10,11 @@ All Rights Reserved
 This version fixes a few quirks of the standard module, namely:
 
 - Discard multi-lines mode: only one line is supported.
+- Moving in line more reasonably: no more going alone rightward.
 """
 
 import curses
 import curses.ascii
-import logging
 
 
 class Textbox:
@@ -51,7 +51,6 @@ class Textbox:
 
     def _end_of_line(self):
         """Return the index of the last non-blank character."""
-        logging.debug(f"textpad._end_of_line")
         self._update_maxx()
         last = self.maxx
         while True:
@@ -65,7 +64,6 @@ class Textbox:
         return last
 
     def _insert_printable_char(self, ch):
-        logging.debug(f"textpad._insert_printable_char {ch}")
         self._update_maxx()
         _, x = self.win.getyx()
         backx = None
@@ -93,7 +91,6 @@ class Textbox:
 
     def do_command(self, ch):
         """Process a single editing command."""
-        logging.debug(f"textpad.do_command {ch}")
         self._update_maxx()
         _, x = self.win.getyx()
         if curses.ascii.isprint(ch):
@@ -122,7 +119,7 @@ class Textbox:
                 self.win.move(0, self.maxx)
         elif ch in (curses.ascii.ACK, curses.KEY_RIGHT):  # ^f
             if x < self.maxx:
-                self.win.move(0, x + 1)
+                self.win.move(0, min(x + 1, self._end_of_line()))
         elif ch == curses.ascii.VT:                       # ^k
             if x == 0 and self._end_of_line() == 0:
                 self.win.deleteln()
