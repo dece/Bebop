@@ -2,7 +2,6 @@
 
 import curses
 import curses.ascii
-import curses.textpad
 import os
 import logging
 import tempfile
@@ -10,6 +9,7 @@ from typing import Optional
 
 from bebop.external import open_external_program
 from bebop.links import Links
+from bebop.textbox import Textbox
 
 
 class CommandLine:
@@ -33,7 +33,7 @@ class CommandLine:
     def __init__(self, window, editor_command):
         self.window = window
         self.editor_command = editor_command
-        self.textbox = curses.textpad.Textbox(self.window)
+        self.textbox = Textbox(self.window, insert_mode=True)
 
     def clear(self):
         """Clear command-line contents."""
