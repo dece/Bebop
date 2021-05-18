@@ -1,10 +1,8 @@
 TODO                                    
 ----------------------------------------
-bug: xterm is borked
 dumb rendering mode per site
 well, preferences per site maybe?
 does encoding really work? cf. egsam
-get/set config using command-line
 more UT
 setup.py
 
@@ -13,6 +11,7 @@ setup.py
 BACKLOG
 --------------------------------------------------------------------------------
 click on links to open them
+get/set config using command-line
 download without memory buffer
 download in the background
 download view instead of last download

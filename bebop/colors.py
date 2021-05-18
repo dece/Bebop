@@ -17,8 +17,8 @@ class ColorPair(IntEnum):
     BLOCKQUOTE   = 8
 
     # Colors for other usage in the browser.
-    LINK_PREVIEW = 9
-    DEBUG        = 99
+    DEBUG        = 9
+    LINK_PREVIEW = 10
 
 
 def init_colors():
