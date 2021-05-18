@@ -1,6 +1,5 @@
 TODO                                    
 ----------------------------------------
-bug: can't input unicode
 bug: xterm is borked
 dumb rendering mode per site
 well, preferences per site maybe?

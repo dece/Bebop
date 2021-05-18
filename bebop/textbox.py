@@ -11,6 +11,7 @@ This version fixes a few quirks of the standard module, namely:
 
 - Discard multi-lines mode: only one line is supported.
 - Moving in line more reasonably: no more going alone rightward.
+- Handle Unicode
 """
 
 import curses
@@ -89,14 +90,23 @@ class Textbox:
         if backx is not None:
             self.win.move(0, backx)
 
+    COMMAND_KEYS = (curses.KEY_LEFT, curses.KEY_RIGHT, curses.KEY_BACKSPACE)
+
     def do_command(self, ch):
         """Process a single editing command."""
         self._update_maxx()
         _, x = self.win.getyx()
-        if curses.ascii.isprint(ch):
-            if x < self.maxx:
-                self._insert_printable_char(ch)
-        elif ch == curses.ascii.NL:
+        if curses.ascii.iscntrl(ch) or ch in self.COMMAND_KEYS:
+            return self.do_control(ch, x)
+        if x < self.maxx:
+            curses.ungetch(ch)
+            ch = self.win.get_wch()
+            self._insert_printable_char(ch)
+        return 1
+
+    def do_control(self, ch, x):
+        """Process a control character."""
+        if ch == curses.ascii.NL:
             return 0
         elif ch == curses.ascii.SOH:                      # ^a
             self.win.move(0, 0)
@@ -135,12 +145,11 @@ class Textbox:
         """Collect and return the contents of the window."""
         result = ""
         self._update_maxx()
-        self.win.move(0, 0)
         stop = self._end_of_line()
         for x in range(self.maxx + 1):
             if self.stripspaces and x > stop:
                 break
-            result = result + chr(curses.ascii.ascii(self.win.inch(0, x)))
+            result += chr(self.win.inch(0, x))
         return result
 
     def edit(self, validate=None):
