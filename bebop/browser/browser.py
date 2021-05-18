@@ -303,6 +303,7 @@ class Browser:
         num_words = len(words)
         if num_words == 0:
             return
+
         command = words[0]
         if num_words == 1:
             if command in ("q", "quit"):

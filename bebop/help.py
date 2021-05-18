@@ -77,7 +77,11 @@ Your current configuration is:
 
 def get_help(config):
     config_list = "\n".join(
-        f'* {key} = {value}   (default "{DEFAULT_CONFIG[key]}")'
+        (
+            f'* {key} = {value} (default {repr(DEFAULT_CONFIG[key])})'
+            if value != DEFAULT_CONFIG[key]
+            else f'* {key} = {value}'
+        )
         for key, value in config.items()
     )
     return HELP_PAGE + config_list
