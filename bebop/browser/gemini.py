@@ -73,7 +73,6 @@ def open_gemini_url(
     if use_cache and url in browser.cache:
         browser.load_page(browser.cache[url])
         browser.current_url = url
-        browser.set_status(url)
         return url
 
     logging.info(
@@ -232,7 +231,6 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
         browser.load_page(page)
         browser.current_url = url
         browser.cache[url] = page
-        browser.set_status(url)
         return url
     elif filepath:
         try:

@@ -28,6 +28,9 @@ opt. maintain history between sessions
 history (forward) (useful?)
 search in page (ugh)
 remember scroll pos in history
+identity management
+"previous/next" pages
+directory view for file scheme
 
 
 

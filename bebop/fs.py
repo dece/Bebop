@@ -39,12 +39,11 @@ def get_downloads_path() -> Path:
                 if line.startswith("XDG_DOWNLOAD_DIR="):
                     download_path = line.rstrip().split("=", maxsplit=1)[1]
                     download_path = download_path.strip('"')
-                    download_path = download_path.replace("$HOME", expanduser("~"))
-                    break
+                    home = expanduser("~")
+                    download_path = download_path.replace("$HOME", home)
+                    return Path(download_path)
     except OSError:
         pass
-    if download_path:
-        return Path(download_path)
     return Path.home()
 
 
