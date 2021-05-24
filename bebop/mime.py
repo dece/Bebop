@@ -25,9 +25,9 @@ class MimeType:
     def from_str(mime_string) -> Optional["MimeType"]:
         """Parse a MIME string into a MimeType instance, or None on error."""
         if ";" in mime_string:
-            type_str, *parameters = mime_string.split(";")
+            type_str, *param_strs = mime_string.split(";")
             parameters = {}
-            for param in map(lambda s: s.strip().lower(), parameters):
+            for param in map(lambda s: s.strip().lower(), param_strs):
                 if param.count("=") != 1:
                     return None
                 param_name, param_value = param.split("=")

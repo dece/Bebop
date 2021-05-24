@@ -2,7 +2,6 @@ TODO
 ----------------------------------------
 dumb rendering mode per site
 well, preferences per site maybe?
-does encoding really work? cf. egsam
 more UT
 setup.py
 
