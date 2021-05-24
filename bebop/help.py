@@ -43,9 +43,10 @@ Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or M
 
 Commands are mostly for actions requiring user input. You can type a command with arguments by pressing the corresponding keybind above.
 
-* o/open <url>: open this URL
-* q/quit: well, quit
-* h/home: open your home page
+* o(pen) <url>: open this URL
+* q(uit): well, quit
+* h(ome): open your home page
+* i(nfo): show page informations
 * forget_certificate <hostname>: remove saved fingerprint for this hostname
 
 ## Configuration

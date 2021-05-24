@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
+from typing import Optional
 
 from bebop.gemtext import parse_gemtext
 from bebop.metalines import generate_dumb_metalines, generate_metalines
+from bebop.mime import MimeType
 from bebop.links import Links
 
 
@@ -22,6 +24,8 @@ class Page:
     metalines: list = field(default_factory=list)
     links: Links = field(default_factory=Links)
     title: str = ""
+    mime: Optional[MimeType] = None
+    encoding: str = ""
 
     @staticmethod
     def from_gemtext(gemtext: str, wrap_at: int):

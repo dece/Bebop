@@ -3,7 +3,6 @@ TODO
 dumb rendering mode per site
 well, preferences per site maybe?
 does encoding really work? cf. egsam
-add metadata to status bar
 more UT
 setup.py
 
@@ -22,12 +21,14 @@ buffers (tabs)
 a11y? tts?
 handle soft-hyphens on wrapping
 bug: combining chars reduce lengths
-non shit command-line
+use a pad for command-line
+use a pad for status bar
 response code 11 (if still there)
 gopher?
 opt. maintain history between sessions
 history (forward) (useful?)
 search in page (ugh)
+remember scroll pos in history
 
 
 

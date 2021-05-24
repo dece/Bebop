@@ -310,6 +310,8 @@ class Browser:
                 self.running = False
             elif command in ("h", "home"):
                 self.open_home()
+            elif command in ("i", "info"):
+                self.show_page_info()
             return
         if command in ("o", "open"):
             self.open_url(words[1])
@@ -657,3 +659,14 @@ class Browser:
     def open_welcome_page(self):
         """Open the default welcome page."""
         self.open_internal_page("welcome", WELCOME_PAGE)
+
+    def show_page_info(self):
+        """Show some page informations in the status bar."""
+        if not self.page_pad or not self.page_pad.current_page:
+            return
+        page = self.page_pad.current_page
+        mime = page.mime.short if page.mime else "(unknown MIME type)"
+        encoding = page.encoding or "(unknown encoding)"
+        size = f"{len(page.source)} chars"
+        info = f"{mime}  {encoding}  {size}"
+        self.set_status(info)

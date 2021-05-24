@@ -216,8 +216,12 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             else:
                 page = Page.from_gemtext(text, browser.config["text_width"])
         else:
-            text = response.content.decode("utf-8", errors="replace")
+            encoding = "utf-8"
+            text = response.content.decode(encoding, errors="replace")
             page = Page.from_text(text)
+        if page:
+            page.mime = mime_type
+            page.encoding = encoding
     else:
         download_dir = browser.config["download_path"]
         filepath = _get_download_path(url, download_dir=download_dir)
