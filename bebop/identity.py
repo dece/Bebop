@@ -49,7 +49,7 @@ def save_identities(identities: dict, identities_path: Path):
     """Save the certificate stash. Return True on success."""
     try:
         with open(identities_path, "wt") as identities_file:
-            json.dump(identities, identities_file)
+            json.dump(identities, identities_file, indent=2)
     except (OSError, ValueError) as exc:
         logging.error(f"Failed to save identities '{identities_path}': {exc}")
         return False
