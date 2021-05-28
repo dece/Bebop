@@ -49,7 +49,8 @@ Commands are mostly for actions requiring user input. You can type a command wit
 * q(uit): well, quit
 * h(ome): open your home page
 * i(nfo): show page informations
-* forget_certificate <hostname>: remove saved fingerprint for this hostname
+* forget-certificate <hostname>: remove saved fingerprint for this hostname
+* set-render-mode: set render mode preference for the current URL
 
 ## Configuration
 

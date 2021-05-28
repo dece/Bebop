@@ -333,7 +333,7 @@ class Browser:
         elif command == "forget-certificate":
             from bebop.browser.gemini import forget_certificate
             forget_certificate(self, words[1])
-        elif command == "render":
+        elif command == "set-render-mode":
             self.set_render_mode(words[1])
 
     def get_user_text_input(self, status_text, char, prefix="", strip=False):
