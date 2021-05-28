@@ -306,7 +306,9 @@ class Browser:
 
         command = words[0]
         if num_words == 1:
-            if command in ("q", "quit"):
+            if command == "help":
+                self.open_help()
+            elif command in ("q", "quit"):
                 self.running = False
             elif command in ("h", "home"):
                 self.open_home()
