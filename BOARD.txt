@@ -1,9 +1,8 @@
 TODO                                    
 ----------------------------------------
-dumb rendering mode per site
-well, preferences per site maybe?
 more UT
 setup.py
+make client cert gen configurable
 
 
 
@@ -56,3 +55,5 @@ media files
 identity management
 logging
 home page
+different rendering mode
+preferences per site
