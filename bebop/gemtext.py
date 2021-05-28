@@ -54,7 +54,7 @@ class ListItem:
 ParsedGemtext = namedtuple("ParsedGemtext", ("elements", "links", "title"))
 
 
-def parse_gemtext(text: str) -> ParsedGemtext:
+def parse_gemtext(text: str, dumb=False) -> ParsedGemtext:
     """Parse a string of Gemtext into a list of elements."""
     elements = []
     links = Links()
@@ -63,7 +63,9 @@ def parse_gemtext(text: str) -> ParsedGemtext:
     preformatted = None
     for line in text.splitlines():
         line = line.rstrip()
-        if not line:
+        # In standard mode, discard empty lines. In dumb mode, empty lines are
+        # kept as basic text.
+        if not line and not dumb:
             continue
 
         if line.startswith(Preformatted.FENCE):

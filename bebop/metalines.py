@@ -35,18 +35,23 @@ class LineType(IntEnum):
     LIST_ITEM = 8
 
 
-def generate_metalines(elements, width):
+def generate_metalines(elements, width, dumb=False):
     """Format elements into a list of lines with metadata.
 
     The returned list ("metalines") are tuples (meta, line), meta being a
-    dict of metadata and line a text line to display. Currently the only
-    metadata keys used are:
+    dict of metadata and a text line to display. Currently the only metadata
+    keys used are:
     - type: one of the Renderer.TYPE constants.
     - url: only for links, the URL the link on this line refers to. Note
       that this key is present only for the first line of the link, i.e.
       long link descriptions wrapped on multiple lines will not have a this
       key except for the first line.
     - link_id: only alongside "url" key, ID generated for this link.
+
+    Arguments:
+    - elements: list of elements to use.
+    - width: max text width to use.
+    - dumb: if True, standard presentation margins are ignored.
     """
     metalines = []
     context = {"width": width}
@@ -78,12 +83,17 @@ def generate_metalines(elements, width):
             thin_type = LineType.LIST_ITEM
         else:
             continue
+        # In dumb mode, elements producing no metalines still need to be
+        # rendered as empty lines.
+        if dumb:
+            if not element_metalines:
+                element_metalines = [({"type": LineType.PARAGRAPH}, "")]
         # If current element requires margins and is not the first elements,
         # separate from previous element. Also do it if the current element does
         # not require margins but follows an element that required it (e.g. link
         # after a paragraph). Also do it if both the current and previous
         # elements do not require margins but differ in type.
-        if (
+        elif (
             (has_margins and index > 0)
             or (not has_margins and previous_had_margins)
             or (not has_margins and thin_type != last_thin_type)
