@@ -77,7 +77,7 @@ class Browser:
         self.cache = {}
         self.special_pages = self.setup_special_pages()
         self.last_download: Optional[Tuple[MimeType, Path]] = None
-        self.identities = load_identities(get_identities_list_path()) or {}
+        self.identities = {}
         self._current_url = ""
 
     @property
@@ -147,7 +147,20 @@ class Browser:
             self.config["command_editor"]
         )
 
-        if start_url:
+        failed_to_load = []
+        identities = load_identities(get_identities_list_path())
+        if identities is None:
+            failed_to_load.append("identities")
+        else:
+            self.identities = identities
+
+        if failed_to_load:
+            error_msg = (
+                f"Failed to open some local data: {', '.join(failed_to_load)}. "
+                "Some data may be lost if you continue."
+            )
+            self.set_status_error(error_msg)
+        elif start_url:
             self.open_url(start_url)
         else:
             self.open_home()
@@ -229,15 +242,6 @@ class Browser:
                     self.scroll_page_vertically(-1)
                 elif char == ord("l"):
                     self.scroll_page_horizontally(1)
-        # elif char == ord("@"):
-        #     self.current_url = "bebop:debugzone"
-        #     t = "\n".join("* " + u for u in self.history.urls)
-        #     t += "\n\n" + "\n".join("* " + u for u in self.history.backlist)
-        #     self.load_page(Page.from_text(t))
-        #     # unctrled = curses.unctrl(char)
-        #     # if unctrled == b"^T":
-        #     #     self.set_status("test!")
-        #     pass
 
     @property
     def page_pad_size(self):
