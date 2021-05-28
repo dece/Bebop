@@ -37,6 +37,7 @@ Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or M
 * y: open history
 * digits: go to the corresponding link ID
 * escape: reset status line text
+* section sign (§): toggle between render modes for the current page
 * C-c: cancel current operation
 
 ## Commands

@@ -228,6 +228,8 @@ class Browser:
             self.edit_page()
         elif char == ord("y"):
             self.open_history()
+        elif char == ord("§"):
+            self.toggle_render_mode()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -705,3 +707,21 @@ class Browser:
         self.capsule_prefs[url] = prefs
         save_capsule_prefs(self.capsule_prefs, get_capsule_prefs_path())
         self.reload_page()
+
+    def toggle_render_mode(self):
+        """Switch to the next render mode for the current page."""
+        if not self.page_pad or not self.page_pad.current_page:
+            return
+        page = self.page_pad.current_page
+        if page.render is None or page.render not in RENDER_MODES:
+            next_mode = RENDER_MODES[0]
+        else:
+            cur_mod_index = RENDER_MODES.index(page.render)
+            next_mode = RENDER_MODES[(cur_mod_index + 1) % len(RENDER_MODES)]
+        new_page = Page.from_gemtext(
+            page.source,
+            wrap_at=self.config["text_width"],
+            render=next_mode
+        )
+        self.load_page(new_page)
+        self.set_status(f"Using render mode '{next_mode}'.")

@@ -21,6 +21,7 @@ class Page:
     - title: optional page title.
     - mime: optional MIME type received from the server.
     - encoding: optional encoding received from the server.
+    - render: optional render mode used to create the page from Gemtext.
     """
     source: str
     metalines: list = field(default_factory=list)
@@ -28,6 +29,7 @@ class Page:
     title: str = ""
     mime: Optional[MimeType] = None
     encoding: str = ""
+    render: Optional[str] = None
 
     @staticmethod
     def from_gemtext(gemtext: str, wrap_at: int, render: str ="fancy"):
@@ -35,7 +37,7 @@ class Page:
         dumb_mode = render == "dumb"
         elements, links, title = parse_gemtext(gemtext, dumb=dumb_mode)
         metalines = generate_metalines(elements, wrap_at, dumb=dumb_mode)
-        return Page(gemtext, metalines, links, title)
+        return Page(gemtext, metalines, links, title, render=render)
 
     @staticmethod
     def from_text(text: str):
