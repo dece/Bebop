@@ -19,6 +19,8 @@ class Page:
       corresponding metalines, it is meant to be used as a quick map for link ID
       lookup and disambiguation.
     - title: optional page title.
+    - mime: optional MIME type received from the server.
+    - encoding: optional encoding received from the server.
     """
     source: str
     metalines: list = field(default_factory=list)
