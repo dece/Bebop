@@ -59,6 +59,12 @@ def get_identities_path():
     return get_user_data_path() / "identities"
 
 
+@lru_cache(None)
+def get_capsule_prefs_path():
+    """Return the directory where identities are stored."""
+    return get_user_data_path() / "capsule_prefs.json"
+
+
 def ensure_bebop_files_exist() -> Optional[str]:
     """Ensure various Bebop's files or directories are present.
 
@@ -78,5 +84,10 @@ def ensure_bebop_files_exist() -> Optional[str]:
         identities_path = get_identities_path()
         if not identities_path.exists():
             identities_path.mkdir(parents=True)
+        # Ensure the capsule preferences file exists.
+        capsule_prefs_path = get_capsule_prefs_path()
+        if not capsule_prefs_path.exists():
+            with open(capsule_prefs_path, "wt") as prefs_file:
+                prefs_file.write("{}")
     except OSError as exc:
         return str(exc)

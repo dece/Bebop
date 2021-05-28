@@ -28,10 +28,11 @@ class Page:
     encoding: str = ""
 
     @staticmethod
-    def from_gemtext(gemtext: str, wrap_at: int, dumb: bool =False):
+    def from_gemtext(gemtext: str, wrap_at: int, render: str ="fancy"):
         """Produce a Page from a Gemtext file or string."""
-        elements, links, title = parse_gemtext(gemtext, dumb=dumb)
-        metalines = generate_metalines(elements, wrap_at, dumb=dumb)
+        dumb_mode = render == "dumb"
+        elements, links, title = parse_gemtext(gemtext, dumb=dumb_mode)
+        metalines = generate_metalines(elements, wrap_at, dumb=dumb_mode)
         return Page(gemtext, metalines, links, title)
 
     @staticmethod

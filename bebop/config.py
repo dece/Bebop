@@ -15,7 +15,10 @@ DEFAULT_CONFIG = {
     "external_commands": {},
     "external_command_default": ["xdg-open"],
     "home": "bebop:welcome",
+    "render_mode": "fancy",
 }
+
+RENDER_MODES = ("fancy", "dumb")
 
 
 def load_config(config_path):

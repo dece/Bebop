@@ -17,9 +17,10 @@ from bebop.bookmarks import (
     save_bookmark,
 )
 from bebop.colors import ColorPair, init_colors
+from bebop.config import RENDER_MODES
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
-from bebop.fs import get_identities_list_path
+from bebop.fs import get_capsule_prefs_path, get_identities_list_path
 from bebop.help import get_help
 from bebop.history import History
 from bebop.identity import load_identities
@@ -36,6 +37,7 @@ from bebop.navigation import (
 )
 from bebop.page import Page
 from bebop.page_pad import PagePad
+from bebop.preferences import load_capsule_prefs, save_capsule_prefs
 from bebop.welcome import WELCOME_PAGE
 
 
@@ -153,6 +155,11 @@ class Browser:
             failed_to_load.append("identities")
         else:
             self.identities = identities
+        capsule_prefs = load_capsule_prefs(get_capsule_prefs_path())
+        if capsule_prefs is None:
+            failed_to_load.append("capsule preferences")
+        else:
+            self.capsule_prefs = capsule_prefs
 
         if failed_to_load:
             error_msg = (
@@ -324,6 +331,8 @@ class Browser:
         elif command == "forget-certificate":
             from bebop.browser.gemini import forget_certificate
             forget_certificate(self, words[1])
+        elif command == "render":
+            self.set_render_mode(words[1])
 
     def get_user_text_input(self, status_text, char, prefix="", strip=False):
         """Get user input from the command-line."""
@@ -423,7 +432,7 @@ class Browser:
             self.set_status_error(f"Protocol '{scheme}' not supported.")
 
     def load_page(self, page: Page):
-        """Load Gemtext data as the current page."""
+        """Set this page as the current page and refresh appropriate windows."""
         old_pad_height = self.page_pad.dim[0]
         self.page_pad.show_page(page)
         if self.page_pad.dim[0] < old_pad_height:
@@ -676,3 +685,23 @@ class Browser:
         size = f"{len(page.source)} chars"
         info = f"{mime}  {encoding}  {size}"
         self.set_status(info)
+
+    def set_render_mode(self, mode):
+        """Set the render mode for the current path or capsule."""
+        if mode not in RENDER_MODES:
+            valid_modes = ", ".join(RENDER_MODES)
+            self.set_status_error("Valid render modes are: " + valid_modes)
+            return
+        url = self.get_user_text_input(
+            f"Set '{mode}' render mode for which URL (includes children)?",
+            CommandLine.CHAR_TEXT,
+            prefix=self.current_url,
+            strip=True
+        )
+        if not url:
+            return
+        prefs = self.capsule_prefs.get(url, {})
+        prefs["render_mode"] = mode
+        self.capsule_prefs[url] = prefs
+        save_capsule_prefs(self.capsule_prefs, get_capsule_prefs_path())
+        self.reload_page()

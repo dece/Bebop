@@ -65,6 +65,7 @@ Here are the available options:
 * external_commands (see note 2): commands to open various files.
 * external_command_default (see note 1): default command to open files.
 * home (string): home page.
+* render_mode (string): default render mode to use ("fancy" or "dumb").
 
 Notes:
 

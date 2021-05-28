@@ -13,6 +13,7 @@ from bebop.identity import (
 )
 from bebop.navigation import set_parameter
 from bebop.page import Page
+from bebop.preferences import get_url_render_mode_pref
 from bebop.protocol import Request, Response
 from bebop.tofu import trust_fingerprint, untrust_fingerprint, WRONG_FP_ALERT
 
@@ -213,7 +214,13 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             except LookupError:
                 error = f"Unknown encoding {encoding}."
             else:
-                page = Page.from_gemtext(text, browser.config["text_width"])
+                text_width = browser.config["text_width"]
+                render_mode = get_url_render_mode_pref(
+                    browser.capsule_prefs,
+                    url,
+                    browser.config["render_mode"]
+                )
+                page = Page.from_gemtext(text, text_width, render=render_mode)
         else:
             encoding = "utf-8"
             text = response.content.decode(encoding, errors="replace")
