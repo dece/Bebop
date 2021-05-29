@@ -21,6 +21,9 @@ class ColorPair(IntEnum):
     LINK_PREVIEW = 10
 
 
+A_ITALIC = curses.A_ITALIC if hasattr(curses, "A_ITALIC") else curses.A_NORMAL
+
+
 def init_colors():
     curses.use_default_colors()
     curses.init_pair(ColorPair.NORMAL, curses.COLOR_WHITE, -1)

@@ -2,7 +2,7 @@
 
 import curses
 
-from bebop.colors import ColorPair
+from bebop.colors import A_ITALIC, ColorPair
 from bebop.metalines import LineType
 
 
@@ -48,7 +48,7 @@ def render_line(metaline, window, max_width):
         attributes = (
             curses.color_pair(ColorPair.LINK_PREVIEW)
             | curses.A_DIM
-            | curses.A_ITALIC
+            | A_ITALIC
         )
         window.addstr(url_text, attributes)
 
@@ -70,6 +70,6 @@ def get_base_line_attributes(line_type) -> int:
     elif line_type == LineType.PREFORMATTED:
         return curses.color_pair(ColorPair.PREFORMATTED)
     elif line_type == LineType.BLOCKQUOTE:
-        return curses.color_pair(ColorPair.BLOCKQUOTE) | curses.A_ITALIC
+        return curses.color_pair(ColorPair.BLOCKQUOTE) | A_ITALIC
     else:  # includes LineType.PARAGRAPH
         return curses.color_pair(ColorPair.NORMAL)

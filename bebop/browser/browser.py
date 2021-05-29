@@ -16,7 +16,7 @@ from bebop.bookmarks import (
     get_bookmarks_document,
     save_bookmark,
 )
-from bebop.colors import ColorPair, init_colors
+from bebop.colors import A_ITALIC, ColorPair, init_colors
 from bebop.config import RENDER_MODES
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
@@ -290,7 +290,7 @@ class Browser:
 
     def set_status(self, text):
         """Set a regular message in the status bar."""
-        self.status_data = text, ColorPair.NORMAL, curses.A_ITALIC
+        self.status_data = text, ColorPair.NORMAL, A_ITALIC
         self.refresh_status_line()
 
     def reset_status(self):
