@@ -1,6 +1,5 @@
 TODO                                    
 ----------------------------------------
-more UT
 setup.py
 make client cert gen configurable
 
