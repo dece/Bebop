@@ -43,4 +43,5 @@ def main():
         save_cert_stash(cert_stash, cert_stash_path)
 
 
-main()
+if __name__ == '__main__':
+    main()
