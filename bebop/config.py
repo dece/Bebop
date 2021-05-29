@@ -2,7 +2,7 @@
 
 import json
 import logging
-import os.path
+from pathlib import Path
 
 
 DEFAULT_CONFIG = {
@@ -33,8 +33,8 @@ DEFAULT_CONFIG = {
 RENDER_MODES = ("fancy", "dumb")
 
 
-def load_config(config_path):
-    if not os.path.isfile(config_path):
+def load_config(config_path: Path):
+    if not config_path.is_file():
         create_default_config(config_path)
         return DEFAULT_CONFIG
 
@@ -42,9 +42,11 @@ def load_config(config_path):
         with open(config_path, "rt") as config_file:
             config = json.load(config_file)
     except OSError as exc:
-        logging.error(f"Could not read config file {config_path}: {exc}")
+        abs_path = config_path.absolute()
+        logging.error(f"Could not read config file {abs_path}: {exc}")
     except ValueError as exc:
-        logging.error(f"Could not parse config file {config_path}: {exc}")
+        abs_path = config_path.absolute()
+        logging.error(f"Could not parse config file {abs_path}: {exc}")
     else:
         # Fill missing values with defaults.
         for key, value in DEFAULT_CONFIG.items():
@@ -54,7 +56,14 @@ def load_config(config_path):
     return DEFAULT_CONFIG
 
 
-def create_default_config(config_path):
+def create_default_config(config_path: Path):
+    config_dir = config_path.parent
+    if not config_dir.is_dir():
+        try:
+            config_dir.mkdir(parents=True)
+        except OSError as exc:
+            logging.error(f"Could not create config dir {config_dir}: {exc}")
+            return
     try:
         with open(config_path, "wt") as config_file:
             json.dump(DEFAULT_CONFIG, config_file, indent=2)

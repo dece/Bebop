@@ -301,7 +301,7 @@ def _handle_cert_required(
     The result of `open_gemini_url` with the client certificate provided.
     """
     identities = load_identities(get_identities_list_path())
-    if not identities:
+    if identities is None:
         browser.set_status_error("Can't load identities.")
         return None
     browser.identities = identities
