@@ -1,5 +1,6 @@
 """Gemini protocol implementation."""
 
+import logging
 import re
 import socket
 import ssl
@@ -157,7 +158,15 @@ class Request:
         # Setup TLS.
         context = Request.get_ssl_context()
         if self.identity:
-            context.load_cert_chain(*self.identity)
+            try:
+                context.load_cert_chain(*self.identity)
+            except FileNotFoundError as exc:
+                sock.close()
+                self.state = Request.STATE_CONNECTION_FAILED
+                self.error = "Could not load identity files."
+                logging.error(f"Failed to load identity files {self.identity}")
+                return False
+
         try:
             self.ssock = context.wrap_socket(sock, server_hostname=hostname)
         except OSError as exc:

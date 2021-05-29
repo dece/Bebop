@@ -352,8 +352,9 @@ def create_identity(browser: Browser, url: str):
         return None
 
     browser.set_status("Generating certificate…")
+    gen_command = browser.config["generate_client_cert_command"]
     try:
-        mangled_name = create_certificate(url, common_name)
+        mangled_name = create_certificate(url, common_name, gen_command)
     except ClientCertificateException as exc:
         browser.set_status_error(exc.message)
         return None

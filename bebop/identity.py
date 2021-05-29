@@ -83,24 +83,23 @@ def get_cert_and_key(cert_id: str):
     return directory / f"{cert_id}.crt", directory / f"{cert_id}.key"
 
 
-def create_certificate(url: str, common_name: str):
+def create_certificate(url: str, common_name: str, gen_command: list):
     """Create a secure self-signed certificate using system's OpenSSL."""
     identities_path = get_identities_path()
     mangled_name = get_mangled_name(url, common_name)
     cert_path = identities_path / f"{mangled_name}.crt"
     key_path = identities_path / f"{mangled_name}.key"
-    command = [
-        "openssl", "req",
-        "-newkey", "rsa:4096",
-        "-nodes",
-        "-keyform", "PEM",
-        "-keyout", str(key_path),
-        "-x509",
-        "-days", "28140",  # https://www.youtube.com/watch?v=F9L4q-0Pi4E
-        "-outform", "PEM",
-        "-out", str(cert_path),
-        "-subj", f"/CN={common_name}",
-    ]
+
+    command = []
+    for part in gen_command:
+        if "{key_path}" in part:
+            part = part.format(key_path=str(key_path))
+        if "{cert_path}" in part:
+            part = part.format(cert_path=str(cert_path))
+        if "{common_name}" in part:
+            part = part.format(common_name=common_name)
+        command.append(part)
+
     try:
         subprocess.check_call(
             command,

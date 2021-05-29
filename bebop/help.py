@@ -68,12 +68,15 @@ Here are the available options:
 * external_command_default (see note 1): default command to open files.
 * home (string): home page.
 * render_mode (string): default render mode to use ("fancy" or "dumb").
+* generate_client_cert_command (see note 3): command to generate a client cert.
 
 Notes:
 
 1: for the "command" parameters such as source_editor and command_editor, a string list is used to separate the different program arguments, e.g. if you wish to use `vim -c 'startinsert'`, you should write the list `["vim", "-c", "startinsert"]`. In both case, a temporary or regular file name will be appended to this command when run.
 
 2: the external_commands dict maps MIME types to commands just as above. For example, if you want to open video files with VLC and audio files in Clementine, you can use the following dict: `{"audio": ["clementine"], "video": ["vlc"]}`.  For now only "main" MIME types are supported, i.e. you cannot specify precise types like "audio/flac", just "audio".
+
+3: the generate_client_cert_command uses the same format as other commands (specified in note 1 above), with the exception that if the strings "{cert_path}", "{key_path}" or "{common_name}" are present in any string for the list, they will be replaced respectively by the certificate output path, the key output path and the CN to use.
 
 Your current configuration is:
 

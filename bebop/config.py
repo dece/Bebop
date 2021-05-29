@@ -16,6 +16,18 @@ DEFAULT_CONFIG = {
     "external_command_default": ["xdg-open"],
     "home": "bebop:welcome",
     "render_mode": "fancy",
+    "generate_client_cert_command": [
+        "openssl", "req",
+        "-newkey", "rsa:4096",
+        "-nodes",
+        "-keyform", "PEM",
+        "-keyout", "{key_path}",
+        "-x509",
+        "-days", "28140",  # https://www.youtube.com/watch?v=F9L4q-0Pi4E
+        "-outform", "PEM",
+        "-out", "{cert_path}",
+        "-subj", "/CN={common_name}",
+    ],
 }
 
 RENDER_MODES = ("fancy", "dumb")
