@@ -1,7 +1,6 @@
 TODO                                    
 ----------------------------------------
-setup.py
-make client cert gen configurable
+mac bug: arrows in cli are off
 
 
 
