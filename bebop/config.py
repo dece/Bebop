@@ -28,6 +28,7 @@ DEFAULT_CONFIG = {
         "-out", "{cert_path}",
         "-subj", "/CN={common_name}",
     ],
+    "scroll_step": 3,
 }
 
 RENDER_MODES = ("fancy", "dumb")
