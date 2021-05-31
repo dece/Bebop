@@ -130,7 +130,9 @@ class Browser:
         self.screen.clear()
         self.screen.refresh()
 
-        curses.mousemask(curses.ALL_MOUSE_EVENTS)
+        mousemask = curses.mousemask(curses.ALL_MOUSE_EVENTS)
+        if mousemask == 0:
+            logging.error("Could not enable mouse support.")
         curses.curs_set(0)
         init_colors()
 
@@ -233,7 +235,10 @@ class Browser:
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
-            self.handle_mouse(*curses.getmouse())
+            try:
+                self.handle_mouse(*curses.getmouse())
+            except curses.error:
+                pass
         elif char == curses.KEY_RESIZE:
             self.handle_resize()
         elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
