@@ -19,6 +19,12 @@ you want to try something a bit different, keep reading…
 [lagrange]: https://git.skyjake.fi/skyjake/lagrange
 [kristall]: https://kristall.random-projects.net/
 
+Screenshots:
+
+![welcome screenshot](https://files.dece.space/img/bebop/bebop-welcome.png)
+![browsing Medusae screenshot](https://files.dece.space/img/bebop/bebop-medusae.png)
+![browsing Spacewalk screenshot](https://files.dece.space/img/bebop/bebop-spacewalk.png)
+
 
 
 Features
