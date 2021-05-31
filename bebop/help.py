@@ -11,13 +11,13 @@ Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or M
 
 * colon: focus the command-line
 * r: reload page
-* h: scroll left a bit
-* j: scroll down a bit
-* k: scroll up a bit
-* l: scroll right a bit
+* h (or left): scroll left a bit
+* j (or down): scroll down a bit
+* k (or up): scroll up a bit
+* l (or right): scroll right a bit
 * H: scroll left a whole page
-* J: scroll down a whole page
-* K: scroll up a whole page
+* J (or page down): scroll down a whole page
+* K (or page up): scroll up a whole page
 * L: scroll right a whole page
 * M-h: scroll one column left
 * M-j: scroll one line down

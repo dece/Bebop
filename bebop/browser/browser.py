@@ -186,19 +186,19 @@ class Browser:
             self.quick_command("")
         elif char == ord("r"):
             self.reload_page()
-        elif char == ord("h"):
+        elif char == ord("h") or char == curses.KEY_LEFT:
             self.scroll_page_horizontally(-3)
         elif char == ord("H"):
             self.scroll_whole_page_left()
-        elif char == ord("j"):
+        elif char == ord("j") or char == curses.KEY_DOWN:
             self.scroll_page_vertically(3)
-        elif char == ord("J"):
+        elif char == ord("J") or char == curses.KEY_NPAGE:
             self.scroll_whole_page_down()
-        elif char == ord("k"):
+        elif char == ord("k") or char == curses.KEY_UP:
             self.scroll_page_vertically(-3)
-        elif char == ord("K"):
+        elif char == ord("K") or char == curses.KEY_PPAGE:
             self.scroll_whole_page_up()
-        elif char == ord("l"):
+        elif char == ord("l") or char == curses.KEY_RIGHT:
             self.scroll_page_horizontally(3)
         elif char == ord("L"):
             self.scroll_whole_page_right()
