@@ -163,7 +163,7 @@ class Request:
             except FileNotFoundError as exc:
                 sock.close()
                 self.state = Request.STATE_CONNECTION_FAILED
-                self.error = "Could not load identity files."
+                self.error = "Could not load identity files ({exc})"
                 logging.error(f"Failed to load identity files {self.identity}")
                 return False
 

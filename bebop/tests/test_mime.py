@@ -1,6 +1,6 @@
 import unittest
 
-from ..mime import MimeType, DEFAULT_CHARSET, DEFAULT_MIME_TYPE
+from ..mime import MimeType
 
 
 class TestMime(unittest.TestCase):

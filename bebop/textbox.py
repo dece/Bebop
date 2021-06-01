@@ -11,7 +11,7 @@ This version fixes a few quirks of the standard module, namely:
 
 - Discard multi-lines mode: only one line is supported.
 - Moving in line more reasonably: no more going alone rightward.
-- Handle Unicode
+- Handle Unicode.
 """
 
 import curses
@@ -31,7 +31,7 @@ class Textbox:
     - Ctrl-L: Refresh screen.
 
     Move operations do nothing if the cursor is at an edge where the movement
-    is not possible.  The following synonyms are supported where possible:
+    is not possible. The following synonyms are supported where possible:
 
     - KEY_LEFT: Ctrl-B
     - KEY_RIGHT: Ctrl-F
