@@ -1,12 +1,17 @@
 TODO                                    
 ----------------------------------------
+click on links to open them
+opt. maintain history between sessions
+directory view for file scheme
+search in page (ugh)
 
 
 
 BACKLOG
 --------------------------------------------------------------------------------
-click on links to open them
+provide a plugin interface for schemes
 get/set config using command-line
+async event system
 download without memory buffer
 download in the background
 download view instead of last download
@@ -22,13 +27,11 @@ response code 11 (if still there)
 gopher?
 finger?
 web????
-opt. maintain history between sessions
 history (forward) (useful?)
-search in page (ugh)
 remember scroll pos in history
 identity management
 "previous/next" pages
-directory view for file scheme
+configurable keybinds
 
 
 
