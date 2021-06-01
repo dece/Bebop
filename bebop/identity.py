@@ -109,6 +109,9 @@ def create_certificate(url: str, common_name: str, gen_command: list):
     except subprocess.CalledProcessError as exc:
         error = "Could not create certificate: " + str(exc)
         raise ClientCertificateException(error)
+
+    cert_path.chmod(0o644)
+    key_path.chmod(0o600)
     return mangled_name
 
 
