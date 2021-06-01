@@ -8,7 +8,7 @@ from bebop.tofu import get_cert_stash_path, load_cert_stash, save_cert_stash
 
 
 def main():
-    argparser = argparse.ArgumentParser()
+    argparser = argparse.ArgumentParser(description="Gemini browser")
     argparser.add_argument("url", nargs="?", default=None)
     argparser.add_argument("-d", "--debug", action="store_true")
     args = argparser.parse_args()

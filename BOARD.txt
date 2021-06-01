@@ -1,6 +1,5 @@
 TODO                                    
 ----------------------------------------
-click on links to open them
 opt. maintain history between sessions
 directory view for file scheme
 search in page (ugh)
@@ -59,3 +58,4 @@ logging
 home page
 different rendering mode
 preferences per site
+basic mouse support

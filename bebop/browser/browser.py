@@ -25,6 +25,7 @@ from bebop.help import get_help
 from bebop.history import History
 from bebop.identity import load_identities
 from bebop.links import Links
+from bebop.metalines import LineType
 from bebop.mime import MimeType
 from bebop.mouse import ButtonState
 from bebop.navigation import (
@@ -238,7 +239,7 @@ class Browser:
             try:
                 self.handle_mouse(*curses.getmouse())
             except curses.error:
-                pass
+                logging.error(f"Failed to get mouse information.")
         elif char == curses.KEY_RESIZE:
             self.handle_resize()
         elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
@@ -357,10 +358,6 @@ class Browser:
         This function assumes that the URL can be from an user and thus tries a
         few things to make it work.
 
-        If there is no current URL (e.g. we just started) or `assume_absolute`
-        is True, assume it is an absolute URL. In other cases, parse it normally
-        and later check if it has to be used relatively to the current URL.
-        
         Arguments:
         - url: an URL string, may not be completely compliant.
         - base_url: an URL string to use as base in case `url` is relative.
@@ -472,12 +469,44 @@ class Browser:
     def handle_mouse(self, mouse_id: int, x: int, y: int, z: int, bstate: int):
         """Handle mouse events.
 
-        Right now, only vertical scrolling is handled.
+        Vertical scrolling is handled, and clicking on links.
         """
         if bstate & ButtonState.SCROLL_UP:
             self.scroll_page_vertically(-3)
         elif bstate & ButtonState.SCROLL_DOWN:
             self.scroll_page_vertically(3)
+        elif bstate & ButtonState.LEFT_CLICKED:
+            self.handle_mouse_click(x, y)
+
+    def handle_mouse_click(self, x: int, y: int):
+        """Handle a mouse click.
+
+        If the click is on a link (appropriate line and columns), open it.
+        """
+        if not self.page_pad or not self.page_pad.current_page:
+            return
+        page = self.page_pad.current_page
+        px, py = self.page_pad.current_column, self.page_pad.current_line
+        line_pos = y + py
+        if line_pos >= len(page.metalines):
+            return
+        meta, line = page.metalines[line_pos]
+        if meta["type"] != LineType.LINK:
+            return
+        # "url" key is contained only in the first line of the link if its text
+        # is wrapped, so if the user did not click on the first line, rewind to
+        # get the URL.
+        while "url" not in meta:
+            line_pos -= 1
+            meta, line = page.metalines[line_pos]
+        url = meta["url"]
+        # The click is valid if it is on the link itself or the dimmed preview.
+        col_pos = x + px
+        if col_pos > len(line):
+            ch = self.page_pad.pad.instr(line_pos, col_pos, 1)
+            if ch == b' ':
+                return
+        self.open_url(url, base_url=self.current_url)
 
     def handle_resize(self):
         """Try to not make everything collapse on resizes."""
