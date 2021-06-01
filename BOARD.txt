@@ -1,6 +1,5 @@
 TODO                                    
 ----------------------------------------
-mac bug: arrows in cli are off
 
 
 
@@ -21,6 +20,8 @@ use a pad for command-line
 use a pad for status bar
 response code 11 (if still there)
 gopher?
+finger?
+web????
 opt. maintain history between sessions
 history (forward) (useful?)
 search in page (ugh)
