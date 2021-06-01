@@ -46,6 +46,11 @@ Why use Bebop instead of something else?
 Install
 -------
 
+You need Python 3.7 or more recent. If you don't know what Python is or if you
+have it installed, check out this Gemini link `gemini://dece.space/dev/faq/using-python-programs.gmi` ([Web version][py-faq-http]).
+
+[py-faq-http]: https://portal.mozz.us/gemini/dece.space/dev/faq/using-python-programs.gmi
+
 ```bash
 pip3 install bebop-browser
 ```
