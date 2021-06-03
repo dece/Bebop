@@ -675,7 +675,10 @@ class Browser:
             return
 
         command = self.config["source_editor"] + [source_filename]
-        open_external_program(command)
+        success = open_external_program(command)
+        if not success:
+            self.set_status_error("Could not open editor.")
+
         if delete_source_after:
             os.unlink(source_filename)
         self.refresh_windows()

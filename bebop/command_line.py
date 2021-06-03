@@ -200,7 +200,9 @@ class CommandLine:
             return
 
         command = self.editor_command + [temp_filepath]
-        open_external_program(command)
+        success = open_external_program(command)
+        if not success:
+            return
 
         try:
             with open(temp_filepath, "rt") as temp_file:
