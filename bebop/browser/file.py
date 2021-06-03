@@ -1,5 +1,8 @@
 """Local files browser."""
 
+import logging
+from pathlib import Path
+
 from bebop.browser.browser import Browser
 from bebop.page import Page
 
@@ -20,13 +23,28 @@ def open_file(browser: Browser, filepath: str, encoding="utf-8"):
     Returns:
     The loaded file URI on success, None otherwise (e.g. file not found).
     """
-    try:
-        with open(filepath, "rt", encoding=encoding) as f:
-            text = f.read()
-    except (OSError, ValueError) as exc:
-        browser.set_status_error(f"Failed to open file: {exc}")
+    path = Path(filepath)
+    if not path.exists():
+        logging.error(f"File {filepath} does not exist.")
         return None
-    browser.load_page(Page.from_text(text))
+
+    if path.is_file():
+        try:
+            with open(filepath, "rt", encoding=encoding) as f:
+                text = f.read()
+        except (OSError, ValueError) as exc:
+            browser.set_status_error(f"Failed to open file: {exc}")
+            return None
+        browser.load_page(Page.from_text(text))
+    elif path.is_dir():
+        gemtext = filepath + "\n\n"
+        for entry in sorted(path.iterdir()):
+            name = entry.name
+            if entry.is_dir():
+                name += "/"
+            gemtext += f"=> {entry} {name}\n"
+        wrap_at = browser.config["text_width"]
+        browser.load_page(Page.from_gemtext(gemtext, wrap_at))
     file_url = "file://" + filepath
     browser.current_url = file_url
     return file_url

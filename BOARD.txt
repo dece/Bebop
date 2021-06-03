@@ -1,7 +1,5 @@
 TODO                                    
 ----------------------------------------
-opt. maintain history between sessions
-directory view for file scheme
 search in page (ugh)
 
 
@@ -59,3 +57,4 @@ home page
 different rendering mode
 preferences per site
 basic mouse support
+basic local browsing
