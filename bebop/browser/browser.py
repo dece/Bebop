@@ -164,10 +164,15 @@ class Browser:
         else:
             self.capsule_prefs = capsule_prefs
 
+        # Load user data files that may not exist (no warning).
+        if self.config["persistent_history"]:
+            if not self.history.load():
+                logging.warning("Could not load history file.")
+
         if failed_to_load:
             error_msg = (
                 f"Failed to open some local data: {', '.join(failed_to_load)}. "
-                "Some data may be lost if you continue."
+                "These may be replaced if you continue."
             )
             self.set_status_error(error_msg)
         elif start_url:
@@ -175,11 +180,15 @@ class Browser:
         else:
             self.open_home()
 
+        # Start listening for inputs.
         while self.running:
             try:
                 self.handle_inputs()
             except KeyboardInterrupt:
                 self.set_status("Cancelled.")
+
+        if self.config["persistent_history"]:
+            self.history.save()
 
     def handle_inputs(self):
         char = self.screen.getch()

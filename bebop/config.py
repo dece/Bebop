@@ -29,6 +29,7 @@ DEFAULT_CONFIG = {
         "-subj", "/CN={common_name}",
     ],
     "scroll_step": 3,
+    "persistent_history": False,
 }
 
 RENDER_MODES = ("fancy", "dumb")

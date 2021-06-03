@@ -1,10 +1,12 @@
 """History management."""
 
+import logging
+
+from bebop.fs import get_history_path
+
 
 class History:
-    """Basic browsing history manager.
-
-    """
+    """Basic browsing history manager."""
 
     def __init__(self, limit):
         self.urls = []
@@ -55,3 +57,28 @@ class History:
             urls.append(url)
             seen.add(url)
         return "# History\n\n" + "\n".join("=> " + url for url in urls)
+
+    def save(self):
+        """Save current history to user data."""
+        history_path = get_history_path()
+        try:
+            with open(history_path, "wt") as history_file:
+                for url in self.urls:
+                    history_file.write(url + "\n")
+        except OSError as exc:
+            logging.error(f"Failed to save history {history_path}: {exc}")
+            return False
+        return True
+
+    def load(self):
+        """Load saved history from user data."""
+        history_path = get_history_path()
+        self.urls = []
+        try:
+            with open(history_path, "rt") as history_file:
+                for url in history_file:
+                    self.urls.append(url.rstrip())
+        except OSError as exc:
+            logging.error(f"Failed to load history {history_path}: {exc}")
+            return False
+        return True

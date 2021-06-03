@@ -48,21 +48,27 @@ def get_downloads_path() -> Path:
 
 
 @lru_cache(None)
-def get_identities_list_path():
+def get_identities_list_path() -> Path:
     """Return the identities JSON file path."""
     return get_user_data_path() / "identities.json"
 
 
 @lru_cache(None)
-def get_identities_path():
+def get_identities_path() -> Path:
     """Return the directory where identities are stored."""
     return get_user_data_path() / "identities"
 
 
 @lru_cache(None)
-def get_capsule_prefs_path():
+def get_capsule_prefs_path() -> Path:
     """Return the directory where identities are stored."""
     return get_user_data_path() / "capsule_prefs.json"
+
+
+@lru_cache(None)
+def get_history_path() -> Path:
+    """Return the saved history path."""
+    return get_user_data_path() / "history.txt"
 
 
 def ensure_bebop_files_exist() -> Optional[str]:

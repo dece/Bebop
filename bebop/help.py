@@ -70,6 +70,7 @@ Here are the available options:
 * render_mode (string): default render mode to use ("fancy" or "dumb").
 * generate_client_cert_command (see note 3): command to generate a client cert.
 * scroll_step (int): number of lines/columns to scroll in one step.
+* persistent_history (bool): save and reload history.
 
 Notes:
 
