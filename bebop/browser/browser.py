@@ -127,16 +127,17 @@ class Browser:
 
     def _run(self, stdscr, start_url=None):
         """Start displaying content and handling events."""
+        # Setup Curses.
         self.screen = stdscr
         self.screen.clear()
         self.screen.refresh()
-
         mousemask = curses.mousemask(curses.ALL_MOUSE_EVENTS)
         if mousemask == 0:
             logging.error("Could not enable mouse support.")
         curses.curs_set(0)
         init_colors()
 
+        # Setup windows and pads.
         self.dim = self.screen.getmaxyx()
         self.page_pad = PagePad(self.h - 2)
         self.status_line = self.screen.subwin(
@@ -152,6 +153,7 @@ class Browser:
             self.config["command_editor"]
         )
 
+        # Load user data files, record which failed to load to warn the user.
         failed_to_load = []
         identities = load_identities(get_identities_list_path())
         if identities is None:
