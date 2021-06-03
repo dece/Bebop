@@ -58,19 +58,19 @@ Bebop uses a JSON file (usually in ~/.config). It is created with default values
 
 Here are the available options:
 
-* connect_timeout (int): seconds before connection times out.
-* text_width (int): rendered line length.
-* download_path (string): download path.
-* source_editor (see note 1): command to use for editing sources.
 * command_editor (see note 1): command to use for editing cli input.
-* history_limit (int): maximum entries in history.
-* external_commands (see note 2): commands to open various files.
+* connect_timeout (int): seconds before connection times out.
+* download_path (string): download path.
 * external_command_default (see note 1): default command to open files.
-* home (string): home page.
-* render_mode (string): default render mode to use ("fancy" or "dumb").
+* external_commands (see note 2): commands to open various files.
 * generate_client_cert_command (see note 3): command to generate a client cert.
-* scroll_step (int): number of lines/columns to scroll in one step.
+* history_limit (int): maximum entries in history.
+* home (string): home page.
 * persistent_history (bool): save and reload history.
+* render_mode (string): default render mode to use ("fancy" or "dumb").
+* scroll_step (int): number of lines/columns to scroll in one step.
+* source_editor (see note 1): command to use for editing sources.
+* text_width (int): rendered line length.
 
 Notes:
 
