@@ -37,7 +37,7 @@ def init_colors(bg: int =-1):
         curses.init_pair(ColorPair.TITLE_2, curses.COLOR_MAGENTA, bg)
         curses.init_pair(ColorPair.TITLE_3, curses.COLOR_MAGENTA, bg)
         curses.init_pair(ColorPair.PREFORMATTED, curses.COLOR_YELLOW, bg)
-        curses.init_pair(ColorPair.BLOCKQUOTE, curses.COLOR_CYAN, bg)
+        curses.init_pair(ColorPair.BLOCKQUOTE, curses.COLOR_BLUE, bg)
         curses.init_pair(ColorPair.LINK_PREVIEW, curses.COLOR_WHITE, bg)
     except curses.error:
         logging.error("Failed to init colors.")
