@@ -1,12 +1,14 @@
 TODO                                    
 ----------------------------------------
+provide a plugin interface for schemes
+finger
 
 
 
 BACKLOG
 --------------------------------------------------------------------------------
-provide a plugin interface for schemes
 get/set config using command-line
+gopher?
 async event system
 download without memory buffer
 download in the background
@@ -20,8 +22,6 @@ bug: combining chars reduce lengths
 use a pad for command-line
 use a pad for status bar
 response code 11 (if still there)
-gopher?
-finger?
 web????
 history (forward) (useful?)
 remember scroll pos in history
@@ -29,6 +29,7 @@ identity management
 "previous/next" pages
 configurable keybinds
 handle big files (e.g. gemini://tilde.team/~tomasino/irc/log.txt)
+allow encoding overrides (useful for gopher i guess)
 
 
 
