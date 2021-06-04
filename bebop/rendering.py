@@ -19,9 +19,8 @@ def render_lines(metalines, window, max_width):
     - max_width: line length limit for the pad.
 
     Returns:
-    The tuple of integers (error, height, width), error being a non-zero value
-    if an error occured during rendering, and height and width being the new
-    dimensions of the resized window.
+    The tuple of integers (height, width), the new dimensions of the resized
+    window.
     """
     num_lines = len(metalines)
     new_dimensions = max(num_lines, 1), max_width

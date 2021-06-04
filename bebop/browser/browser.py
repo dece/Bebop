@@ -64,7 +64,11 @@ class Browser:
         returning the page source path.
     - last_download: tuple of MimeType and path, or None.
     - identities: identities map.
+    - search_res_lines: list of lines containing results of the last search.
     """
+
+    SEARCH_NEXT = 0
+    SEARCH_PREVIOUS = 1
 
     def __init__(self, config, cert_stash):
         self.config = config
@@ -81,6 +85,7 @@ class Browser:
         self.special_pages = self.setup_special_pages()
         self.last_download: Optional[Tuple[MimeType, Path]] = None
         self.identities = {}
+        self.search_res_lines = []
         self._current_url = ""
 
     @property
@@ -244,6 +249,12 @@ class Browser:
             self.open_history()
         elif char == ord("§"):
             self.toggle_render_mode()
+        elif char == ord("/"):
+            self.search_in_page()
+        elif char == ord("n"):
+            self.move_to_search_result(Browser.SEARCH_NEXT)
+        elif char == ord("N"):
+            self.move_to_search_result(Browser.SEARCH_PREVIOUS)
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -494,9 +505,9 @@ class Browser:
 
         If the click is on a link (appropriate line and columns), open it.
         """
-        if not self.page_pad or not self.page_pad.current_page:
-            return
         page = self.page_pad.current_page
+        if not page:
+            return
         px, py = self.page_pad.current_column, self.page_pad.current_line
         line_pos = y + py
         if line_pos >= len(page.metalines):
@@ -727,13 +738,14 @@ class Browser:
 
     def show_page_info(self):
         """Show some page informations in the status bar."""
-        if not self.page_pad or not self.page_pad.current_page:
-            return
         page = self.page_pad.current_page
+        if not page:
+            return
         mime = page.mime.short if page.mime else "(unknown MIME type)"
         encoding = page.encoding or "(unknown encoding)"
         size = f"{len(page.source)} chars"
-        info = f"{mime}  {encoding}  {size}"
+        lines = f"{len(page.metalines)} lines"
+        info = f"{mime}  {encoding}  {size}  {lines}"
         self.set_status(info)
 
     def set_render_mode(self, mode):
@@ -758,9 +770,9 @@ class Browser:
 
     def toggle_render_mode(self):
         """Switch to the next render mode for the current page."""
-        if not self.page_pad or not self.page_pad.current_page:
-            return
         page = self.page_pad.current_page
+        if not page:
+            return
         if page.render is None or page.render not in RENDER_MODES:
             next_mode = RENDER_MODES[0]
         else:
@@ -773,3 +785,46 @@ class Browser:
         )
         self.load_page(new_page)
         self.set_status(f"Using render mode '{next_mode}'.")
+
+    def search_in_page(self):
+        """Search for words in the page."""
+        page = self.page_pad.current_page
+        if not page:
+            return
+        search = self.get_user_text_input("Search", CommandLine.CHAR_TEXT)
+        if not search:
+            return
+        self.search_res_lines = []
+        for index, (_, line) in enumerate(page.metalines):
+            if search in line:
+                self.search_res_lines.append(index)
+        if self.search_res_lines:
+            self.move_to_search_result(Browser.SEARCH_NEXT)
+        else:
+            self.set_status(f"'{search}' not found.")
+
+    def move_to_search_result(self, prev_or_next: int):
+        """Move to the next or previous search result."""
+        current_line = self.page_pad.current_line
+        next_line = None
+        index = 1
+        max_index = len(self.search_res_lines)
+        if prev_or_next == Browser.SEARCH_NEXT:
+            for line in self.search_res_lines:
+                if line > current_line:
+                    next_line = line
+                    break
+                index += 1
+        elif prev_or_next == Browser.SEARCH_PREVIOUS:
+            index = max_index
+            for line in reversed(self.search_res_lines):
+                if line < current_line:
+                    next_line = line
+                    break
+                index -= 1
+        if next_line is None:
+            return
+
+        self.set_status(f"Result {index}/{max_index}")
+        self.page_pad.current_line = next_line
+        self.refresh_windows()

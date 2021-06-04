@@ -1,6 +1,5 @@
 TODO                                    
 ----------------------------------------
-search in page (ugh)
 
 
 
@@ -29,6 +28,7 @@ remember scroll pos in history
 identity management
 "previous/next" pages
 configurable keybinds
+handle big files (e.g. gemini://tilde.team/~tomasino/irc/log.txt)
 
 
 
@@ -58,3 +58,4 @@ different rendering mode
 preferences per site
 basic mouse support
 basic local browsing
+search in page

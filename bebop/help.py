@@ -38,6 +38,9 @@ Keybinds using the SHIFT key are written uppercase. Keybinds using the ALT (or M
 * digits: go to the corresponding link ID
 * escape: reset status line text
 * section sign (§): toggle between render modes for the current page
+* slash (/): search for some text
+* n: go to next search result
+* N: go to previous search result
 * C-c: cancel current operation
 
 ## Commands
