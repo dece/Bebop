@@ -6,6 +6,15 @@ browser to install anything.
 
 Support for plugins is very simple right now: a plugin can only register an URL
 scheme to handle.
+
+To create a plugin, follow these steps:
+
+- Implement a class inheriting one of the plugin classes from this module.
+- Put it in package named `bebop_<plugin-name>`.
+- Make this module export a `plugin` variable which is a plugin instance.
+- Put the plugin name in `enabled_plugins` config to load on next start.
+
+There is at least one plugin in this repository in the `plugins` directory.
 """
 
 from abc import ABC, abstractmethod

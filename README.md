@@ -41,7 +41,7 @@ Why use Bebop instead of something else?
     validation so you can just smash your numpad to take your ship to unknown
     places (see usage section below for details).
 - History, cache, client certificates, bookmarks (it's just a text file with
-    bindings), downloads and more!
+    bindings), downloads, plugins and more!
 
 
 
@@ -75,25 +75,25 @@ sudo pip3 install --upgrade bebop-browser
 Note that you can also simply clone this repo and use `python3 -m bebop` to run
 from the source instead of installing it.
 
-Now for platform specific info…
+### Platform specific info
 
-### Linux
+#### Linux
 
 Linux is the main platform I can test so you should be good to go, and don't
 hesitate to report issues.
 
-### BSD
+#### BSD
 
 I don't know! Let me know your experience with it if you did try it.
 
-### macOS
+#### macOS
 
 It should work on macOS like on other UNIX-like systems. I have limited access
 to devices running macOS so cross your fingers… The main difference I've seen is
 that some keys may behave a bit differently and that text attributes such as
 italics or dim may not work.
 
-### Windows
+#### Windows
 
 Bebop relies heavily on ncurses to display its content to the terminal, and it
 does not work great on Windows. You need to install the curses support
@@ -102,6 +102,19 @@ separately as most Python distributions on Windows do not have it: the package
 
 Seems like there is no color support out of the box nor text attributes. It
 works OK in cmd.exe, but it feels completely broken on Windows Terminal.
+
+### Plugins
+
+Since v0.2.0 you can use and develop plugins for Bebop. Installing a plugin
+requires you to install the corresponding Python package, usually from PyPI,
+then enable the plugin in your config file. Check the internal help page or the
+`bebop/plugin.py` module for more information.
+
+Here is a list of plugins I did, available on PyPI:
+
+- `bebop-browser-finger`: support for Finger protocol ([readme][plugin-finger])
+
+[plugin-finger]: plugins/finger/README.md
 
 
 
