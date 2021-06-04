@@ -7,6 +7,7 @@ import logging
 import os
 import subprocess
 import tempfile
+from importlib import import_module
 from math import inf
 from pathlib import Path
 from typing import Optional, Tuple
@@ -86,6 +87,7 @@ class Browser:
         self.last_download: Optional[Tuple[MimeType, Path]] = None
         self.identities = {}
         self.search_res_lines = []
+        self.plugins = []
         self._current_url = ""
 
     @property
@@ -176,6 +178,12 @@ class Browser:
             if not self.history.load():
                 logging.warning("Could not load history file.")
 
+        # Load plugins.
+        self.load_plugins()
+
+        # If there has been any issue to load user files, show them instead of
+        # automatically moving forward. Else either open the URL requested or
+        # show the home page.
         if failed_to_load:
             error_msg = (
                 f"Failed to open some local data: {', '.join(failed_to_load)}. "
@@ -455,7 +463,15 @@ class Browser:
                 self.set_status_error("Unknown page.")
 
         else:
-            self.set_status_error(f"Protocol '{scheme}' not supported.")
+            from bebop.plugins import SchemePlugin
+            plugins = (p for p in self.plugins if isinstance(p, SchemePlugin))
+            plugin = next(filter(lambda p: p.scheme == scheme, plugins), None)
+            if plugin:
+                result_url = plugin.open_url(self, url)
+                if history and result_url:
+                    self.history.push(result_url)
+            else:
+                self.set_status_error(f"Protocol '{scheme}' not supported.")
 
     def load_page(self, page: Page):
         """Set this page as the current page and refresh appropriate windows."""
@@ -828,3 +844,22 @@ class Browser:
         self.set_status(f"Result {index}/{max_index}")
         self.page_pad.current_line = next_line
         self.refresh_windows()
+
+    def load_plugins(self):
+        """Load installed and configured plugins."""
+        for plugin_name in self.config["enabled_plugins"]:
+            module_name = f"bebop_{plugin_name}"
+
+            try:
+                module = import_module(module_name)
+            except ImportError as exc:
+                logging.error(f"Could not load module {module_name}: {exc}")
+                continue
+
+            try:
+                self.plugins.append(module.plugin)  # type: ignore
+            except AttributeError:
+                logging.error(f"Module {module_name} does not export a plugin.")
+                continue
+
+            logging.info(f"Loaded plugin {plugin_name}.")

@@ -30,6 +30,7 @@ DEFAULT_CONFIG = {
     ],
     "scroll_step": 3,
     "persistent_history": False,
+    "enabled_plugins": [],
 }
 
 RENDER_MODES = ("fancy", "dumb")
