@@ -1,7 +1,5 @@
 TODO                                    
-----------------------------------------
-provide a plugin interface for schemes
-finger
+--------------------------------------------------------------------------------
 
 
 
@@ -60,3 +58,5 @@ preferences per site
 basic mouse support
 basic local browsing
 search in page
+plugin interface for schemes
+finger plugin
