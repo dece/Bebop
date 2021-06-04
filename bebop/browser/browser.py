@@ -787,9 +787,9 @@ class Browser:
     def toggle_render_mode(self):
         """Switch to the next render mode for the current page."""
         page = self.page_pad.current_page
-        if not page:
+        if not page or page.render is None:
             return
-        if page.render is None or page.render not in RENDER_MODES:
+        if page.render not in RENDER_MODES:
             next_mode = RENDER_MODES[0]
         else:
             cur_mod_index = RENDER_MODES.index(page.render)
