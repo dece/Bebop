@@ -9,6 +9,7 @@ from enum import IntEnum
 from typing import Optional
 
 from bebop.mime import DEFAULT_MIME_TYPE, MimeType
+from bebop.navigation import parse_host_and_port
 from bebop.tofu import CertStatus, validate_cert
 
 
@@ -127,16 +128,13 @@ class Request:
         if not url_parts:
             self.state = Request.STATE_INVALID_URL
             return False
-        hostname = url_parts.groupdict()["host"]
-        if ":" in hostname:
-            hostname, port = hostname.split(":", maxsplit=1)
-            try:
-                port = int(port)
-            except ValueError:
-                self.state = Request.STATE_INVALID_URL
-                return False
-        else:
-            port = 1965
+
+        host = url_parts.groupdict()["host"]
+        host_and_port = parse_host_and_port(host, 1965)
+        if host_and_port is None:
+            self.state = Request.STATE_INVALID_URL
+            return False
+        hostname, port = host_and_port
         self.hostname = hostname
 
         # Prepare the Gemini request.

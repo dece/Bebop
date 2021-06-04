@@ -176,3 +176,16 @@ def get_root_url(url: str) -> str:
     parts["path"] = "/"
     clear_post_path(parts)
     return unparse_url(parts)
+
+
+def parse_host_and_port(host: str, default_port: int):
+    """Return the host and port from a "host:port" string."""
+    if ":" in host:
+        host, port = host.split(":", maxsplit=1)
+        try:
+            port = int(port)
+        except ValueError:
+            return None
+    else:
+        port = default_port
+    return host, port
