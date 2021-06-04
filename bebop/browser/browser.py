@@ -842,7 +842,8 @@ class Browser:
             return
 
         self.set_status(f"Result {index}/{max_index}")
-        self.page_pad.current_line = next_line
+        max_line = self.page_pad.get_max_line(self.h)
+        self.page_pad.current_line = min(next_line, max_line)
         self.refresh_windows()
 
     def load_plugins(self):

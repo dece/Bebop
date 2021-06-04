@@ -96,7 +96,7 @@ class PagePad:
 
     def go_to_end(self, window_height):
         """Make the pad show its bottom; return True if a refresh is needed."""
-        max_line = self.dim[0] - window_height
+        max_line = self.get_max_line(window_height)
         if self.current_line != max_line:
             self.current_line = max_line
             return True
@@ -108,3 +108,7 @@ class PagePad:
             self.current_column = 0
             return True
         return False
+
+    def get_max_line(self, window_height):
+        """Return the max line that can be used as current_line."""
+        return self.dim[0] - window_height
