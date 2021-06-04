@@ -261,7 +261,7 @@ class Browser:
             try:
                 self.handle_mouse(*curses.getmouse())
             except curses.error:
-                logging.error(f"Failed to get mouse information.")
+                logging.error("Failed to get mouse information.")
         elif char == curses.KEY_RESIZE:
             self.handle_resize()
         elif char == curses.ascii.ESC:  # Can be ESC or ALT char.
