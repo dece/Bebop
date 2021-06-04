@@ -25,6 +25,8 @@ Screenshots:
 ![browsing Medusae screenshot](https://files.dece.space/img/bebop/bebop-medusae.png)
 ![browsing Spacewalk screenshot](https://files.dece.space/img/bebop/bebop-spacewalk.png)
 
+The changelog is in the annotated tags.
+
 
 
 Features
@@ -51,9 +53,27 @@ have it installed, check out this Gemini link `gemini://dece.space/dev/faq/using
 
 [py-faq-http]: https://portal.mozz.us/gemini/dece.space/dev/faq/using-python-programs.gmi
 
+The easier installation method is using Pip, either user or system-wide
+installation:
+
 ```bash
-pip3 install bebop-browser
+# User installation:
+pip3 install --user bebop-browser
+# System-wide installation:
+sudo pip3 install bebop-browser
 ```
+
+To update:
+
+```bash
+# User update:
+pip3 install --user --upgrade bebop-browser
+# System-wide update:
+sudo pip3 install --upgrade bebop-browser
+```
+
+Note that you can also simply clone this repo and use `python3 -m bebop` to run
+from the source instead of installing it.
 
 Now for platform specific info…
 
@@ -101,7 +121,7 @@ you to the page directly. If there are 30 links, pressing "1" will wait for
 another digit. If there are 1000 links but you wish to visit link 5, pressing 5
 and enter will do.
 
-There is an FAQ at `gemini://dece.space/dev/bebop.gmi` along with updates.
+There is an FAQ at `gemini://dece.space/dev/bebop.gmi`.
 
 Happy browsing!
 
