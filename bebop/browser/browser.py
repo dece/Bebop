@@ -114,6 +114,10 @@ class Browser:
         """Return the scheme of the current URL."""
         return parse_url(self._current_url)["scheme"] or ""
 
+    @property
+    def current_page(self) -> Optional[Page]:
+        return self.page_pad.current_page
+
     def setup_special_pages(self):
         """Return a dict with the special pages functions."""
         return {
@@ -486,9 +490,9 @@ class Browser:
 
     def handle_digit_input(self, init_char: int):
         """Focus command-line to select the link ID to follow."""
-        if self.page_pad.current_page is None:
+        if self.current_page is None:
             return
-        links = self.page_pad.current_page.links
+        links = self.current_page.links
         if links is None:
             return
         err, val = self.command_line.focus_for_link_navigation(init_char, links)
@@ -521,14 +525,13 @@ class Browser:
 
         If the click is on a link (appropriate line and columns), open it.
         """
-        page = self.page_pad.current_page
-        if not page:
+        if not self.current_page:
             return
         px, py = self.page_pad.current_column, self.page_pad.current_line
         line_pos = y + py
-        if line_pos >= len(page.metalines):
+        if line_pos >= len(self.current_page.metalines):
             return
-        meta, line = page.metalines[line_pos]
+        meta, line = self.current_page.metalines[line_pos]
         if meta["type"] != LineType.LINK:
             return
         # "url" key is contained only in the first line of the link if its text
@@ -536,7 +539,7 @@ class Browser:
         # get the URL.
         while "url" not in meta:
             line_pos -= 1
-            meta, line = page.metalines[line_pos]
+            meta, line = self.current_page.metalines[line_pos]
         url = meta["url"]
         # The click is valid if it is on the link itself or the dimmed preview.
         col_pos = x + px
@@ -662,7 +665,7 @@ class Browser:
         """Add the current URL as bookmark."""
         if not self.current_url:
             return
-        current_title = self.page_pad.current_page.title or ""
+        current_title = self.current_page.title or ""
         title = self.get_user_text_input(
             "Bookmark title?",
             CommandLine.CHAR_TEXT,
@@ -690,9 +693,9 @@ class Browser:
             get_source = special_pages_functions.get("source")
             source_filename = get_source() if get_source else None
         else:
-            if not self.page_pad.current_page:
+            if not self.current_page:
                 return
-            source = self.page_pad.current_page.source
+            source = self.current_page.source
             with tempfile.NamedTemporaryFile("wt", delete=False) as source_file:
                 source_file.write(source)
                 source_filename = source_file.name
@@ -754,7 +757,7 @@ class Browser:
 
     def show_page_info(self):
         """Show some page informations in the status bar."""
-        page = self.page_pad.current_page
+        page = self.current_page
         if not page:
             return
         mime = page.mime.short if page.mime else "(unknown MIME type)"
@@ -786,7 +789,7 @@ class Browser:
 
     def toggle_render_mode(self):
         """Switch to the next render mode for the current page."""
-        page = self.page_pad.current_page
+        page = self.current_page
         if not page or page.render is None:
             return
         if page.render not in RENDER_MODES:
@@ -804,14 +807,13 @@ class Browser:
 
     def search_in_page(self):
         """Search for words in the page."""
-        page = self.page_pad.current_page
-        if not page:
+        if not self.current_page:
             return
         search = self.get_user_text_input("Search", CommandLine.CHAR_TEXT)
         if not search:
             return
         self.search_res_lines = []
-        for index, (_, line) in enumerate(page.metalines):
+        for index, (_, line) in enumerate(self.current_page.metalines):
             if search in line:
                 self.search_res_lines.append(index)
         if self.search_res_lines:
