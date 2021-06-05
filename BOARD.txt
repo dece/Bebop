@@ -1,12 +1,12 @@
 TODO                                    
 --------------------------------------------------------------------------------
+gopher plugin
 
 
 
 BACKLOG
 --------------------------------------------------------------------------------
 get/set config using command-line
-gopher?
 async event system
 download without memory buffer
 download in the background
