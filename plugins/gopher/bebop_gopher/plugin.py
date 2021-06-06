@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Optional
 
 from bebop.browser.browser import Browser
+from bebop.command_line import CommandLine
 from bebop.links import Links
 from bebop.metalines import LineType
 from bebop.navigation import parse_url, parse_host_and_port
@@ -15,7 +16,7 @@ from bebop.plugins import SchemePlugin
 class ItemType(Enum):
     FILE = "0"
     DIR = "1"
-    CSO = "2"
+    CCSO = "2"
     ERROR = "3"
     BINHEXED = "4"
     DOS = "5"
@@ -35,10 +36,15 @@ class ItemType(Enum):
     _missing_ = lambda s: ItemType.FILE
 
 
+UNHANDLED_TYPES = (
+    ItemType.CCSO, ItemType.ERROR, ItemType.TELNET, ItemType.REDUNDANT,
+    ItemType.TN3270
+)
 ICONS = {
     ItemType.FILE: "📄",
     ItemType.DIR: "📂",
     ItemType.ERROR: "❌",
+    ItemType.SEARCH: "🤔",
     ItemType.HTML: "🌐",
 }
 
@@ -74,19 +80,33 @@ class GopherPlugin(SchemePlugin):
         if type_path_match:
             item_type = ItemType(type_path_match.group(1))
             path = type_path_match.group(2)
-            logging.debug(f"Gopher type for URL: type {item_type} path {path}")
+            # Don't try to open a Telnet connection or other silly retro things.
+            if item_type in UNHANDLED_TYPES:
+                browser.set_status_error(f"Unhandled item {item_type.name}.")
+                return None
+            # Let user input some text for search items.
+            if item_type == ItemType.SEARCH:
+                user_input = browser.get_user_text_input(
+                    "Input:",
+                    CommandLine.CHAR_TEXT,
+                    strip=True
+                )
+                if not user_input:
+                    return None
+                item_type = ItemType.DIR
+                previous_search_index = path.find("%09")
+                if previous_search_index > -1:
+                    path = path[:previous_search_index]
+                path = f"{path}\t{user_input}"
+            # Note that we don't try to handle "h" items here because if the URL
+            # actually uses http scheme, it should not end up in this plugin.
         else:
-            # Else you're on your own! If we're opening a link of a map, find
-            # that item type. Default to DIR item type.
             item_type = ItemType.DIR
-            if browser.current_page:
-                for meta, line in browser.current_page.metalines:
-                    if meta.get("url") == url:
-                        item_type = meta.get("gophertype") or ItemType.DIR
-                        break
-            logging.debug(f"Gopher type from current map: type {item_type}")
 
-        browser.set_status(f"Loading {url}…")
+        # If we have text search in our path, encode it for UI & logging.
+        encoded_path = path.replace("\t", "%09")
+        browser.set_status(f"Loading {host} {port} '{encoded_path}'…")
+
         timeout = browser.config["connect_timeout"]
         try:
             response = self.request(host, port, path, timeout)
@@ -94,7 +114,9 @@ class GopherPlugin(SchemePlugin):
         except GopherPluginException as exc:
             browser.set_status_error("Error: " + exc.message)
             return None
+
         browser.load_page(page)
+        url = f"gopher://{host}:{port}/{item_type.value}{encoded_path}"
         browser.current_url = url
         return url
 
@@ -167,7 +189,6 @@ def parse_source(source: str, item_type: ItemType):
 
             meta = {
                 "type": LineType.LINK,
-                "gophertype": item_type,
                 "url": link_url,
                 "link": current_link_id
             }
