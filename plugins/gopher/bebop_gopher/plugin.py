@@ -44,7 +44,7 @@ ICONS = {
     ItemType.FILE: "📄",
     ItemType.DIR: "📂",
     ItemType.ERROR: "❌",
-    ItemType.SEARCH: "🤔",
+    ItemType.SEARCH: "✍ ",
     ItemType.HTML: "🌐",
 }
 
@@ -73,7 +73,8 @@ class GopherPlugin(SchemePlugin):
             browser.set_status_error("Could not parse gopher URL.")
             return None
         host, port = host_and_port
-        path = parts["path"]
+        # Decode path; spaces in Gopher URLs are encoded for display in Bebop.
+        path = parts["path"].replace("%20", " ")
 
         # If the URL has an item type, use it to properly parse the response.
         type_path_match = TYPE_PATH_RE.match(path)
@@ -103,13 +104,13 @@ class GopherPlugin(SchemePlugin):
         else:
             item_type = ItemType.DIR
 
-        # If we have text search in our path, encode it for UI & logging.
-        encoded_path = path.replace("\t", "%09")
+        # If we have spaces in our path, encode it for UI & logging.
+        encoded_path = path.replace(" ", "%20").replace("\t", "%09")
         browser.set_status(f"Loading {host} {port} '{encoded_path}'…")
 
         timeout = browser.config["connect_timeout"]
         try:
-            response = self.request(host, port, path, timeout)
+            response = request(host, port, path, timeout)
             page = parse_response(response, item_type)
         except GopherPluginException as exc:
             browser.set_status_error("Error: " + exc.message)
@@ -120,28 +121,29 @@ class GopherPlugin(SchemePlugin):
         browser.current_url = url
         return url
 
-    def request(self, host: str, port: int, path: str, timeout: int):
-        try:
-            sock = socket.create_connection((host, port), timeout=timeout)
-        except OSError as exc:
-            raise GopherPluginException("failed to establish connection")
 
-        try:
-            request_str = path.encode() + b"\r\n"
-        except ValueError as exc:
-            raise GopherPluginException("could not encode path")
+def request(host: str, port: int, path: str, timeout: int):
+    try:
+        sock = socket.create_connection((host, port), timeout=timeout)
+    except OSError as exc:
+        raise GopherPluginException("failed to establish connection")
 
-        sock.sendall(request_str)
-        response = b""
-        while True:
-            try:
-                buf = sock.recv(4096)
-            except socket.timeout:
-                buf = None
-            if not buf:
-                return response
-            response += buf
-        return decoded
+    try:
+        request_str = path.encode() + b"\r\n"
+    except ValueError as exc:
+        raise GopherPluginException("could not encode path")
+
+    sock.sendall(request_str)
+    response = b""
+    while True:
+        try:
+            buf = sock.recv(4096)
+        except socket.timeout:
+            buf = None
+        if not buf:
+            return response
+        response += buf
+    return decoded
 
 
 def parse_response(response: bytes, item_type: ItemType, encoding: str ="utf8"):
