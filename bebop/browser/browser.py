@@ -358,6 +358,14 @@ class Browser:
             return
 
         command = words[0]
+
+        # Check for plugin registered commands first.
+        for plugin in self.plugins:
+            if command in map(lambda c: c.name, plugin.commands):
+                plugin.use_command(self, command, command_text)
+                return
+
+        # Then built-in commands without args.
         if num_words == 1:
             if command == "help":
                 self.open_help()
@@ -368,6 +376,8 @@ class Browser:
             elif command in ("i", "info"):
                 self.show_page_info()
             return
+
+        # And commands with one or more args.
         if command in ("o", "open"):
             self.open_url(words[1])
         elif command == "forget-certificate":

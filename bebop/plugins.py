@@ -18,15 +18,58 @@ There is at least one plugin in this repository in the `plugins` directory.
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Optional
 
 from bebop.browser.browser import Browser
 
 
-class SchemePlugin(ABC):
-    """Plugin for URL scheme management."""
+@dataclass
+class PluginCommand:
+    """A descriptor for a plugin command.
+
+    Attributes:
+    - name: the command name.
+    - description: a very short description of the command; should start lower
+      case and does not need a period at the end.
+    """
+    name: str
+    description: str
+
+
+class Plugin(ABC):
+    """Base class for plugins.
+
+    Attributes:
+    - commands: list of PluginCommand provided by the plugin.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.commands = []
+
+    def use_command(self, browser: Browser, name: str, text: str):
+        """Use a command presented by this plugin.
+
+        Plugins that do not use custom commands can leave this method
+        unimplemented.
+
+        Attributes:
+        - name: the command used as it is in the commands list.
+        - text: the whole command text, including the command name.
+        """
+        pass
+
+
+class SchemePlugin(Plugin):
+    """Plugin for URL scheme management.
+
+    If you want to create a plugin that can handle new schemes, create a plugin
+    inheriting this class.
+    """
 
     def __init__(self, scheme: str) -> None:
+        super().__init__()
         self.scheme = scheme
 
     @abstractmethod
