@@ -6,8 +6,10 @@ from typing import Optional
 
 from bebop.browser.browser import Browser
 from bebop.command_line import CommandLine
+from bebop.downloads import get_download_path
 from bebop.links import Links
 from bebop.metalines import LineType
+from bebop.mime import MimeType
 from bebop.navigation import parse_url, parse_host_and_port, unparse_url
 from bebop.page import Page
 from bebop.plugins import PluginCommand, SchemePlugin
@@ -36,6 +38,8 @@ class ItemType(Enum):
     _missing_ = lambda s: ItemType.FILE
 
 
+# Types that can be parsed as a page (see `parse_source`).
+PARSABLE_TYPES = (ItemType.FILE, ItemType.DIR)
 # Types that are not rendered by this plugin; should be handled by a separate
 # program, but for now we simply do nothing with them.
 UNHANDLED_TYPES = (
@@ -129,14 +133,28 @@ class GopherPlugin(SchemePlugin):
         timeout = browser.config["connect_timeout"]
         try:
             response = request(host, port, path, timeout)
-            page = parse_response(response, item_type)
         except GopherPluginException as exc:
             browser.set_status_error("Error: " + exc.message)
             return None
 
-        browser.load_page(page)
         url = f"gopher://{host}:{port}/{item_type.value}{encoded_path}"
-        browser.current_url = url
+        if item_type in PARSABLE_TYPES:
+            page = parse_response(response, item_type)
+            browser.load_page(page)
+            browser.current_url = url
+        else:
+            download_dir = browser.config["download_path"]
+            filepath = get_download_path(url, download_dir=download_dir)
+            try:
+                with open(filepath, "wb") as download_file:
+                    download_file.write(response)
+            except OSError as exc:
+                browser.set_status_error(f"Failed to save {url} ({exc})")
+                return None
+            else:
+                browser.set_status(f"Downloaded {url}.")
+                browser.last_download = None, filepath
+
         return url
 
     def use_command(self, browser: Browser, name: str, text: str):
@@ -212,7 +230,11 @@ def get_page_from_source(source: str, item_type: ItemType):
 
 
 def parse_source(source: str, item_type: ItemType):
-    """Generate metalines and a Links instance for this source text."""
+    """Generate metalines and a Links instance for this source text.
+
+    The item_type must be a type that can be parsed: FILE or DIR. Any other
+    item type will silently result in no metalines.
+    """
     metalines = []
     links = Links()
 
