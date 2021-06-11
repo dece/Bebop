@@ -5,7 +5,8 @@ Bebop is a [Gemini][gemini] browser for the terminal, focusing on practicality
 and laziness. It is a personal project to learn how to use ncurses and try new
 ways to explore the Geminispace. It borrows some ideas from [Amfora][amfora],
 another great terminal browser, Vim for interactivity and tries to support mouse
-usage decently.
+usage decently. It also supports some “smol net” protocols such as Finger and
+Gopher through plugins.
 
 [gemini]: https://gemini.circumlunar.space/
 [amfora]: https://github.com/makeworld-the-better-one/amfora
@@ -108,13 +109,15 @@ works OK in cmd.exe, but it feels completely broken on Windows Terminal.
 Since v0.2.0 you can use and develop plugins for Bebop. Installing a plugin
 requires you to install the corresponding Python package, usually from PyPI,
 then enable the plugin in your config file. Check the internal help page or the
-`bebop/plugin.py` module for more information.
+`bebop/plugins.py` module for more information.
 
 Here is a list of plugins I did, available on PyPI:
 
 - `bebop-browser-finger`: support for Finger protocol ([readme][plugin-finger])
+- `bebop-browser-gopher`: support for Gopher protocol ([readme][plugin-gopher])
 
 [plugin-finger]: plugins/finger/README.md
+[plugin-gopher]: plugins/gopher/README.md
 
 
 
