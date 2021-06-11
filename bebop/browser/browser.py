@@ -99,12 +99,12 @@ class Browser:
         return self.dim[1]
 
     @property
-    def current_url(self):
+    def current_url(self) -> str:
         """Return the current URL."""
         return self._current_url
 
     @current_url.setter
-    def current_url(self, url):
+    def current_url(self, url: str):
         """Set the current URL and show it in the status line."""
         self._current_url = url
         self.set_status(url)
@@ -244,7 +244,7 @@ class Browser:
         elif char == ord("o"):
             self.quick_command("open")
         elif char == ord("O"):
-            self.open_last_download()
+            self.quick_command(f"open {self.current_url}")
         elif char == ord("p"):
             self.go_back()
         elif char == ord("u"):
@@ -291,6 +291,8 @@ class Browser:
                     self.scroll_page_vertically(-1)
                 elif char == ord("l"):
                     self.scroll_page_horizontally(1)
+                elif char == ord("o"):
+                    self.open_last_download()
 
     @property
     def page_pad_size(self):
