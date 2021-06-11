@@ -1,12 +1,12 @@
 """Gemini-related features of the browser."""
 
 import logging
-from pathlib import Path
 from typing import Optional
 
 from bebop.browser.browser import Browser
 from bebop.command_line import CommandLine
-from bebop.fs import get_downloads_path, get_identities_list_path
+from bebop.downloads import get_download_path
+from bebop.fs import get_identities_list_path
 from bebop.identity import (
     ClientCertificateException, create_certificate, get_cert_and_key,
     get_identities_for_url, load_identities, save_identities
@@ -230,7 +230,7 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             page.encoding = encoding
     else:
         download_dir = browser.config["download_path"]
-        filepath = _get_download_path(url, download_dir=download_dir)
+        filepath = get_download_path(url, download_dir=download_dir)
 
     # If a page has been produced, load it. Else if a file has been retrieved,
     # download it.
@@ -252,20 +252,6 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
     elif error:
         browser.set_status_error(error)
     return None
-
-
-def _get_download_path(url: str, download_dir: Optional[str] =None) -> Path:
-    """Try to find the best download file path possible from this URL."""
-    download_path = Path(download_dir) if download_dir else get_downloads_path()
-    if not download_path.exists():
-        download_path.mkdir(parents=True)
-    url_parts = url.rsplit("/", maxsplit=1)
-    if url_parts:
-        filename = url_parts[-1]
-    else:
-        filename = url.split("://")[1] if "://" in url else url
-        filename = filename.replace("/", "_")
-    return download_path / filename
 
 
 def _handle_input_request(
