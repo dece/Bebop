@@ -28,6 +28,8 @@ identity management
 configurable keybinds
 handle big files (e.g. gemini://tilde.team/~tomasino/irc/log.txt)
 allow encoding overrides (useful for gopher i guess)
+config for web browser, default to webbrowser module
+use pubkeys instead of the whole DER hash for TOFU
 
 
 
