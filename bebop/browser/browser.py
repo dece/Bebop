@@ -725,7 +725,7 @@ class Browser:
 
     def open_help(self):
         """Show the help page."""
-        self.open_internal_page("help", get_help(self.config))
+        self.open_internal_page("help", get_help(self.config, self.plugins))
 
     def prompt(self, text: str, keys: str ="yn"):
         """Display the text and allow it to type one of the given keys."""
