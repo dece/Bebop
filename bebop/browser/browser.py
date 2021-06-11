@@ -63,7 +63,7 @@ class Browser:
         values are dicts as well: the "open" key maps to a callable to use when
         the page is accessed, and the optional "source" key maps to callable
         returning the page source path.
-    - last_download: tuple of MimeType and path, or None.
+    - last_download: tuple of MimeType (may be None) and path, or None.
     - identities: identities map.
     - search_res_lines: list of lines containing results of the last search.
     """
@@ -84,7 +84,7 @@ class Browser:
         self.history = History(self.config["history_limit"])
         self.cache = {}
         self.special_pages = self.setup_special_pages()
-        self.last_download: Optional[Tuple[MimeType, Path]] = None
+        self.last_download: Optional[Tuple[Optional[MimeType], Path]] = None
         self.identities = {}
         self.search_res_lines = []
         self.plugins = []
@@ -742,7 +742,8 @@ class Browser:
         if not self.last_download:
             return
         mime_type, path = self.last_download
-        command = self.config["external_commands"].get(mime_type.main_type)
+        main_type = mime_type.main_type if mime_type else ""
+        command = self.config["external_commands"].get(main_type)
         if not command:
             command = self.config["external_command_default"]
         command = command + [str(path)]
