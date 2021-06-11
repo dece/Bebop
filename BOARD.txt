@@ -1,6 +1,5 @@
 TODO                                    
 --------------------------------------------------------------------------------
-gopher plugin
 
 
 
@@ -62,3 +61,4 @@ basic local browsing
 search in page
 plugin interface for schemes
 finger plugin
+gopher plugin
