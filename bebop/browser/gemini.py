@@ -294,7 +294,7 @@ def _handle_cert_required(
 
     url_identities = get_identities_for_url(browser.identities, url)
     if not url_identities:
-        identity = create_identity(browser, url)
+        identity = create_identity(browser, url, reason=response.meta)
         if not identity:
             return None
         browser.identities[url] = [identity]
@@ -317,13 +317,16 @@ def select_identity(identities: list):
     return identities[0] if identities else None
 
 
-def create_identity(browser: Browser, url: str):
+def create_identity(browser: Browser, url: str, reason: Optional[str] =None):
     """Walk the user through identity creation.
 
     Returns:
     The created identity on success (already registered in identities
     """
-    key = browser.prompt("Create client certificate?")
+    prompt_text = "Create client certificate?"
+    if reason:
+        prompt_text += f" Reason: {reason}"
+    key = browser.prompt(prompt_text)
     if key != "y":
         browser.reset_status()
         return None
