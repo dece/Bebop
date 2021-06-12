@@ -53,7 +53,6 @@ USER_FRIENDLY_TYPES = {t.name.lower(): t for t in ItemType}
 ICONS = {
     ItemType.FILE: "📄",
     ItemType.DIR: "📂",
-    ItemType.ERROR: "❌",
     ItemType.SEARCH: "✍ ",
     ItemType.HTML: "🌐",
 }
@@ -256,19 +255,26 @@ def parse_source(source: str, item_type: ItemType):
                 break
 
             parts = tline.split("\t")
-            if len(parts) != 4:
-                # TODO move me away
-                # Does not seem to be split by tabs, may be a file.
-                metalines.append(({"type": LineType.PARAGRAPH}, line))
-                continue
+            # If the map is poorly formatted and parts are missing, pad with
+            # empty parts.
+            while len(parts) < 4:
+                parts.append("")
 
             item_type = ItemType(ltype)
             label, path, host, port = parts
+
+            # INFO: render as a simple text line.
             if item_type == ItemType.INFO:
-                meta = {"type": LineType.PARAGRAPH}
-                metalines.append((meta, label))
+                metalines.append(({"type": LineType.PARAGRAPH}, label))
                 continue
 
+            # ERROR: render as an error line.
+            if item_type == ItemType.ERROR:
+                metalines.append(({"type": LineType.ERROR}, label))
+                continue
+
+            # Other item types are rendered as links, with a special case for
+            # "URL:"-type selectors in HTML items.
             if item_type == ItemType.HTML and path[:4].upper() == "URL:":
                 link_url = path[4:]
             else:

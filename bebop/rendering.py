@@ -70,5 +70,7 @@ def get_base_line_attributes(line_type) -> int:
         return curses.color_pair(ColorPair.PREFORMATTED)
     elif line_type == LineType.BLOCKQUOTE:
         return curses.color_pair(ColorPair.BLOCKQUOTE) | A_ITALIC
+    elif line_type == LineType.ERROR:
+        return curses.color_pair(ColorPair.ERROR) | curses.A_BOLD
     else:  # includes LineType.PARAGRAPH
         return curses.color_pair(ColorPair.NORMAL)
