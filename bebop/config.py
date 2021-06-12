@@ -22,6 +22,7 @@ DEFAULT_CONFIG = {
         "-nodes",
         "-keyform", "PEM",
         "-keyout", "{key_path}",
+        "-utf8",
         "-x509",
         "-days", "28140",  # https://www.youtube.com/watch?v=F9L4q-0Pi4E
         "-outform", "PEM",
