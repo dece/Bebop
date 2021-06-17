@@ -332,11 +332,12 @@ def create_identity(browser: Browser, url: str, reason: Optional[str] =None):
         return None
 
     common_name = browser.get_user_text_input(
-        "Name? The server will see this, you can leave it empty.",
+        "Name? The server may use it as your username.",
         CommandLine.CHAR_TEXT,
         strip=True,
+        escape_to_none=True
     )
-    if not common_name:
+    if common_name is None:
         browser.reset_status()
         return None
 

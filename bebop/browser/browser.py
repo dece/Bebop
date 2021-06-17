@@ -388,11 +388,18 @@ class Browser:
         elif command == "set-render-mode":
             self.set_render_mode(words[1])
 
-    def get_user_text_input(self, status_text, char, prefix="", strip=False):
+    def get_user_text_input(self, status_text, char, prefix="", strip=False,
+                            escape_to_none=False):
         """Get user input from the command-line."""
         self.set_status(status_text)
-        result = self.command_line.focus(char, prefix=prefix)
+        result = self.command_line.focus(
+            char,
+            prefix=prefix,
+            escape_to_none=escape_to_none
+        )
         self.reset_status()
+        if result is None:
+            return None
         if strip:
             result = result.strip()
         return result
