@@ -35,7 +35,11 @@ def open_file(browser: Browser, filepath: str, encoding="utf-8"):
         except (OSError, ValueError) as exc:
             browser.set_status_error(f"Failed to open file: {exc}")
             return None
-        browser.load_page(Page.from_text(text))
+        if path.suffix == ".gmi":
+            page = Page.from_gemtext(text, browser.config["text_width"])
+        else:
+            page = Page.from_text(text)
+        browser.load_page(page)
     elif path.is_dir():
         gemtext = str(path) + "\n\n"
         for entry in sorted(path.iterdir()):
