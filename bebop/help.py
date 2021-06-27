@@ -103,11 +103,11 @@ def get_help(config, plugins):
     )
     config_list = "\n".join(
         (
-            f"* {key} = {value} (default {repr(DEFAULT_CONFIG[key])})"
-            if value != DEFAULT_CONFIG[key]
-            else f"* {key} = {value}"
+            f"* {key} = {config[key]} (default {repr(DEFAULT_CONFIG[key])})"
+            if config[key] != DEFAULT_CONFIG[key]
+            else f"* {key} = {config[key]}"
         )
-        for key, value in config.items()
+        for key in sorted(config)
     )
     return HELP_PAGE.format(
         plugin_commands=plugin_commands,

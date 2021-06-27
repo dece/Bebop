@@ -4,7 +4,7 @@ Currently contains only overrides for render modes, per URL path. In the future
 it may be interesting to move a few things from the config to here, such as the
 text width.
 
-This is a map from an URL to dicts. The only used key is render_mode.
+This is a map from URLs to dicts. The only used key is render_mode.
 """
 
 import json
@@ -25,7 +25,7 @@ def load_capsule_prefs(prefs_path: Path) -> Optional[dict]:
     return prefs
 
 
-def save_capsule_prefs(prefs: dict, prefs_path: Path):
+def save_capsule_prefs(prefs: dict, prefs_path: Path) -> bool:
     """Save the capsule preferences. Return True on success."""
     try:
         with open(prefs_path, "wt") as prefs_file:

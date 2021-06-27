@@ -782,8 +782,8 @@ class Browser:
         page = self.current_page
         if not page:
             return
-        mime = page.mime.short if page.mime else "(unknown MIME type)"
-        encoding = page.encoding or "(unknown encoding)"
+        mime = page.mime.short if page.mime else "unk. MIME"
+        encoding = page.encoding or "unk. encoding"
         size = f"{len(page.source)} chars"
         lines = f"{len(page.metalines)} lines"
         info = f"{mime}  {encoding}  {size}  {lines}"

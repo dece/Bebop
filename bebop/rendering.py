@@ -1,4 +1,4 @@
-"""Rendering Gemtext in curses."""
+"""Rendering metalines in curses."""
 
 import curses
 
