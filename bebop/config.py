@@ -32,9 +32,8 @@ DEFAULT_CONFIG = {
     "scroll_step": 3,
     "persistent_history": False,
     "enabled_plugins": [],
+    "list_item_bullet": "• ",
 }
-
-RENDER_MODES = ("fancy", "dumb")
 
 
 def load_config(config_path: Path):

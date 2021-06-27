@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import quote, unquote
 
 from bebop.browser.browser import Browser
-from bebop.page import Page
+from bebop.page import Page, get_render_options
 
 
 def open_file(browser: Browser, filepath: str, encoding="utf-8"):
@@ -36,7 +36,7 @@ def open_file(browser: Browser, filepath: str, encoding="utf-8"):
             browser.set_status_error(f"Failed to open file: {exc}")
             return None
         if path.suffix == ".gmi":
-            page = Page.from_gemtext(text, browser.config["text_width"])
+            page = Page.from_gemtext(text, get_render_options(browser.config))
         else:
             page = Page.from_text(text)
         browser.load_page(page)
@@ -48,8 +48,8 @@ def open_file(browser: Browser, filepath: str, encoding="utf-8"):
             if entry.is_dir():
                 name += "/"
             gemtext += f"=> {entry_path} {name}\n"
-        wrap_at = browser.config["text_width"]
-        browser.load_page(Page.from_gemtext(gemtext, wrap_at))
+        render_opts = get_render_options(browser.config)
+        browser.load_page(Page.from_gemtext(gemtext, render_opts))
     file_url = f"file://{path}"
     browser.current_url = file_url
     return file_url

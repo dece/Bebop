@@ -12,7 +12,7 @@ from bebop.identity import (
     get_identities_for_url, load_identities, save_identities
 )
 from bebop.navigation import set_parameter
-from bebop.page import Page
+from bebop.page import Page, get_render_options
 from bebop.preferences import get_url_render_mode_pref
 from bebop.protocol import Request, Response
 from bebop.tofu import trust_fingerprint, untrust_fingerprint, WRONG_FP_ALERT
@@ -138,7 +138,7 @@ def _handle_untrusted_cert(browser: Browser, request: Request):
     )
     alert_page = Page.from_gemtext(
         alert_page_source,
-        browser.config["text_width"]
+        get_render_options(browser.config)
     )
     browser.load_page(alert_page)
 
@@ -214,13 +214,11 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
             except LookupError:
                 error = f"Unknown encoding {encoding}."
             else:
-                text_width = browser.config["text_width"]
-                render_mode = get_url_render_mode_pref(
-                    browser.capsule_prefs,
-                    url,
-                    browser.config["render_mode"]
-                )
-                page = Page.from_gemtext(text, text_width, render=render_mode)
+                render_opts = get_render_options(browser.config)
+                pref_mode = get_url_render_mode_pref(browser.capsule_prefs, url)
+                if pref_mode:
+                    render_opts.mode = pref_mode
+                page = Page.from_gemtext(text, render_opts)
         else:
             encoding = "utf-8"
             text = response.content.decode(encoding, errors="replace")

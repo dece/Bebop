@@ -9,6 +9,7 @@ elements classes as they are quite coupled to Gemtext parsing/rendering.
 """
 
 import string
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import List
 
@@ -18,7 +19,6 @@ from bebop.gemtext import (
 
 SPLIT_CHARS = " \t-"
 JOIN_CHAR = "-"
-LIST_ITEM_MARK = "• "
 
 
 class LineType(IntEnum):
@@ -39,7 +39,18 @@ class LineType(IntEnum):
     ERROR = 9  # Not part of Gemtext but useful internally.
 
 
-def generate_metalines(elements, width, dumb=False):
+RENDER_MODES = ("fancy", "dumb")
+
+
+@dataclass
+class RenderOptions:
+    """Rendering options."""
+    width: int
+    mode: str
+    bullet: str
+
+
+def generate_metalines(elements: list, options: RenderOptions) -> list:
     """Format elements into a list of lines with metadata.
 
     The returned list ("metalines") are tuples (meta, line), meta being a
@@ -54,11 +65,9 @@ def generate_metalines(elements, width, dumb=False):
 
     Arguments:
     - elements: list of elements to use.
-    - width: max text width to use.
-    - dumb: if True, standard presentation margins are ignored.
+    - options: RenderOptions to respect when generating metalines.
     """
     metalines = []
-    context = {"width": width}
     separator = ({"type": LineType.NONE}, "")
     has_margins = False
     thin_type = None
@@ -68,28 +77,28 @@ def generate_metalines(elements, width, dumb=False):
         has_margins = False
         thin_type = None
         if isinstance(element, Title):
-            element_metalines = format_title(element, context)
+            element_metalines = format_title(element, options)
             has_margins = True
         elif isinstance(element, Paragraph):
-            element_metalines = format_paragraph(element, context)
+            element_metalines = format_paragraph(element, options)
             has_margins = True
         elif isinstance(element, Link):
-            element_metalines = format_link(element, context)
+            element_metalines = format_link(element, options)
             thin_type = LineType.LINK
         elif isinstance(element, Preformatted):
-            element_metalines = format_preformatted(element, context)
+            element_metalines = format_preformatted(element, options)
             has_margins = True
         elif isinstance(element, Blockquote):
-            element_metalines = format_blockquote(element, context)
+            element_metalines = format_blockquote(element, options)
             has_margins = True
         elif isinstance(element, ListItem):
-            element_metalines = format_list_item(element, context)
+            element_metalines = format_list_item(element, options)
             thin_type = LineType.LIST_ITEM
         else:
             continue
         # In dumb mode, elements producing no metalines still need to be
         # rendered as empty lines.
-        if dumb:
+        if options.mode == "dumb":
             if not element_metalines:
                 element_metalines = [({"type": LineType.PARAGRAPH}, "")]
         # If current element requires margins and is not the first elements,
@@ -113,9 +122,9 @@ def generate_dumb_metalines(lines):
     return [({"type": LineType.PARAGRAPH}, line) for line in lines]
 
 
-def format_title(title: Title, context: dict):
+def format_title(title: Title, options: RenderOptions):
     """Return metalines for this title."""
-    width = context["width"]
+    width = options.width
     if title.level == 1:
         wrapped = wrap_words(title.text, width)
         line_template = f"{{:^{width}}}"
@@ -129,19 +138,19 @@ def format_title(title: Title, context: dict):
     return [({"type": LineType(title.level)}, line) for line in lines]
 
 
-def format_paragraph(paragraph: Paragraph, context: dict):
+def format_paragraph(paragraph: Paragraph, options: RenderOptions):
     """Return metalines for this paragraph."""
-    lines = wrap_words(paragraph.text, context["width"])
+    lines = wrap_words(paragraph.text, options.width)
     return [({"type": LineType.PARAGRAPH}, line) for line in lines]
 
 
-def format_link(link: Link, context: dict):
+def format_link(link: Link, options: RenderOptions):
     """Return metalines for this link."""
     # Get a new link and build the "[id]" anchor.
     link_anchor = f"[{link.ident}] "
     link_text = link.text or link.url
     # Wrap lines, indented by the link anchor length.
-    lines = wrap_words(link_text, context["width"], indent=len(link_anchor))
+    lines = wrap_words(link_text, options.width, indent=len(link_anchor))
     first_line_meta = {
         "type": LineType.LINK,
         "url": link.url,
@@ -154,7 +163,7 @@ def format_link(link: Link, context: dict):
     return first_line + other_lines
 
 
-def format_preformatted(preformatted: Preformatted, context: dict):
+def format_preformatted(preformatted: Preformatted, options: RenderOptions):
     """Return metalines for this preformatted block."""
     return [
         ({"type": LineType.PREFORMATTED}, line)
@@ -162,17 +171,17 @@ def format_preformatted(preformatted: Preformatted, context: dict):
     ]
 
 
-def format_blockquote(blockquote: Blockquote, context: dict):
+def format_blockquote(blockquote: Blockquote, options: RenderOptions):
     """Return metalines for this blockquote."""
-    lines = wrap_words(blockquote.text, context["width"], indent=2)
+    lines = wrap_words(blockquote.text, options.width, indent=2)
     return [({"type": LineType.BLOCKQUOTE}, line) for line in lines]
 
 
-def format_list_item(item: ListItem, context: dict):
+def format_list_item(item: ListItem, options: RenderOptions):
     """Return metalines for this list item."""
-    indent = len(LIST_ITEM_MARK)
-    lines = wrap_words(item.text, context["width"], indent=indent)
-    first_line = LIST_ITEM_MARK + lines[0][indent:]
+    indent = len(options.bullet)
+    lines = wrap_words(item.text, options.width, indent=indent)
+    first_line = options.bullet + lines[0][indent:]
     lines[0] = first_line
     return [({"type": LineType.LIST_ITEM}, line) for line in lines]
 

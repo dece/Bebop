@@ -18,7 +18,6 @@ from bebop.bookmarks import (
     save_bookmark,
 )
 from bebop.colors import A_ITALIC, ColorPair, init_colors
-from bebop.config import RENDER_MODES
 from bebop.command_line import CommandLine
 from bebop.external import open_external_program
 from bebop.fs import get_capsule_prefs_path, get_identities_list_path
@@ -26,7 +25,7 @@ from bebop.help import get_help
 from bebop.history import History
 from bebop.identity import load_identities
 from bebop.links import Links
-from bebop.metalines import LineType
+from bebop.metalines import LineType, RENDER_MODES
 from bebop.mime import MimeType
 from bebop.mouse import ButtonState
 from bebop.navigation import (
@@ -37,7 +36,7 @@ from bebop.navigation import (
     parse_url,
     unparse_url,
 )
-from bebop.page import Page
+from bebop.page import Page, get_render_options
 from bebop.page_pad import PagePad
 from bebop.preferences import load_capsule_prefs, save_capsule_prefs
 from bebop.welcome import WELCOME_PAGE
@@ -671,7 +670,7 @@ class Browser:
 
     def open_internal_page(self, name, gemtext):
         """Open some content corresponding to a "bebop:" internal URL."""
-        page = Page.from_gemtext(gemtext, self.config["text_width"])
+        page = Page.from_gemtext(gemtext, get_render_options(self.config))
         self.load_page(page)
         self.current_url = "bebop:" + name
 
@@ -813,18 +812,17 @@ class Browser:
     def toggle_render_mode(self):
         """Switch to the next render mode for the current page."""
         page = self.current_page
-        if not page or page.render is None:
+        if not page or page.render_opts is None:
             return
-        if page.render not in RENDER_MODES:
+        render_opts = page.render_opts
+        current_mode = render_opts.mode
+        if current_mode not in RENDER_MODES:
             next_mode = RENDER_MODES[0]
         else:
-            cur_mod_index = RENDER_MODES.index(page.render)
+            cur_mod_index = RENDER_MODES.index(current_mode)
             next_mode = RENDER_MODES[(cur_mod_index + 1) % len(RENDER_MODES)]
-        new_page = Page.from_gemtext(
-            page.source,
-            wrap_at=self.config["text_width"],
-            render=next_mode
-        )
+        render_opts.mode = next_mode
+        new_page = Page.from_gemtext(page.source, render_opts)
         self.load_page(new_page)
         self.set_status(f"Using render mode '{next_mode}'.")
 

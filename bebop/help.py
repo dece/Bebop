@@ -72,6 +72,7 @@ Here are the available options:
 * generate_client_cert_command (see note 3): command to generate a client cert.
 * history_limit (int): maximum entries in history.
 * home (string): home page.
+* list_item_bullet (string): text shown before every list item.
 * persistent_history (bool): save and reload history.
 * render_mode (string): default render mode to use ("fancy" or "dumb").
 * scroll_step (int): number of lines/columns to scroll in one step.

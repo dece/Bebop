@@ -36,7 +36,7 @@ def save_capsule_prefs(prefs: dict, prefs_path: Path):
     return True
 
 
-def get_url_render_mode_pref(prefs: dict, url: str, default: str):
+def get_url_render_mode_pref(prefs: dict, url: str) -> Optional[str]:
     """Return the desired render mode for this URL.
 
     If the preferences contain the URL or a parent URL, the corresponding render
@@ -46,14 +46,13 @@ def get_url_render_mode_pref(prefs: dict, url: str, default: str):
     Arguments:
     - prefs: current capsule preferences.
     - url: URL about to be rendered.
-    - default: default render mode if no user preferences match.
     """
     prefix_urls = []
     for key in prefs:
         if url.startswith(key):
             prefix_urls.append(key)
     if not prefix_urls:
-        return default
+        return None
     key = max(prefix_urls, key=len)
     preference = prefs[key]
-    return preference.get("render_mode", default)
+    return preference.get("render_mode")

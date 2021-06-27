@@ -2,9 +2,19 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from bebop.gemtext import parse_gemtext
-from bebop.metalines import generate_dumb_metalines, generate_metalines
+from bebop.metalines import (
+    RenderOptions, generate_dumb_metalines, generate_metalines)
 from bebop.mime import MimeType
 from bebop.links import Links
+
+
+def get_render_options(config: dict):
+    """Prepare RenderOptions from the user config."""
+    return RenderOptions(
+        width=config["text_width"],
+        mode=config["render_mode"],
+        bullet=config["list_item_bullet"],
+    )
 
 
 @dataclass
@@ -21,7 +31,7 @@ class Page:
     - title: optional page title.
     - mime: optional MIME type received from the server.
     - encoding: optional encoding received from the server.
-    - render: optional render mode used to create the page from Gemtext.
+    - render_opts: optional render options used to create the page from Gemtext.
     """
     source: str
     metalines: list = field(default_factory=list)
@@ -29,15 +39,21 @@ class Page:
     title: str = ""
     mime: Optional[MimeType] = None
     encoding: str = ""
-    render: Optional[str] = None
+    render_opts: Optional[RenderOptions] = None
 
     @staticmethod
-    def from_gemtext(gemtext: str, wrap_at: int, render: str ="fancy"):
+    def from_gemtext(gemtext: str, options: RenderOptions):
         """Produce a Page from a Gemtext file or string."""
-        dumb_mode = render == "dumb"
-        elements, links, title = parse_gemtext(gemtext, dumb=dumb_mode)
-        metalines = generate_metalines(elements, wrap_at, dumb=dumb_mode)
-        return Page(gemtext, metalines, links, title, render=render)
+        dumb = options.mode == "dumb"
+        elements, links, title = parse_gemtext(gemtext, dumb=dumb)
+        metalines = generate_metalines(elements, options)
+        return Page(
+            gemtext,
+            metalines,
+            links,
+            title,
+            render_opts=options
+        )
 
     @staticmethod
     def from_text(text: str):
