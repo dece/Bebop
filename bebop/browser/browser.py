@@ -377,16 +377,19 @@ class Browser:
                 self.open_home()
             elif command in ("i", "info"):
                 self.show_page_info()
-            return
-
+            else:
+                self.set_status_error(f"Unknown command '{command}'.")
         # And commands with one or more args.
-        if command in ("o", "open"):
-            self.open_url(words[1])
-        elif command == "forget-certificate":
-            from bebop.browser.gemini import forget_certificate
-            forget_certificate(self, words[1])
-        elif command == "set-render-mode":
-            self.set_render_mode(words[1])
+        else:
+            if command in ("o", "open"):
+                self.open_url(words[1])
+            elif command == "forget-certificate":
+                from bebop.browser.gemini import forget_certificate
+                forget_certificate(self, words[1])
+            elif command == "set-render-mode":
+                self.set_render_mode(words[1])
+            else:
+                self.set_status_error(f"Unknown command '{command}'.")
 
     def get_user_text_input(self, status_text, char, prefix="", strip=False,
                             escape_to_none=False):
