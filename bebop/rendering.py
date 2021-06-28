@@ -37,13 +37,12 @@ def render_lines(metalines, window, max_width):
 
 def render_line(metaline, window, max_width):
     """Write a single line to the window."""
-    meta, line = metaline
-    line_type = meta["type"]
-    attributes = get_base_line_attributes(line_type)
-    line = line[:max_width - 1]
+    ltype, ltext, lextra = metaline
+    attributes = get_base_line_attributes(ltype)
+    line = ltext[:max_width - 1]
     window.addstr(line, attributes)
-    if meta["type"] == LineType.LINK and "url" in meta:
-        url_text = f'  {meta["url"]}'
+    if ltype == LineType.LINK and lextra and "url" in lextra:
+        url_text = f'  {lextra["url"]}'
         attributes = (
             curses.color_pair(ColorPair.LINK_PREVIEW)
             | curses.A_DIM

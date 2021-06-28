@@ -552,19 +552,19 @@ class Browser:
         line_pos = y + py
         if line_pos >= len(self.current_page.metalines):
             return
-        meta, line = self.current_page.metalines[line_pos]
-        if meta["type"] != LineType.LINK:
+        ltype, ltext, lextra = self.current_page.metalines[line_pos]
+        if ltype != LineType.LINK:
             return
         # "url" key is contained only in the first line of the link if its text
         # is wrapped, so if the user did not click on the first line, rewind to
         # get the URL.
-        while "url" not in meta:
+        while not lextra or "url" not in lextra:
             line_pos -= 1
-            meta, line = self.current_page.metalines[line_pos]
-        url = meta["url"]
+            _, ltext, lextra = self.current_page.metalines[line_pos]
+        url = lextra["url"]
         # The click is valid if it is on the link itself or the dimmed preview.
         col_pos = x + px
-        if col_pos > len(line):
+        if col_pos > len(ltext):
             ch = self.page_pad.pad.instr(line_pos, col_pos, 1)
             if ch == b' ':
                 return
@@ -834,8 +834,8 @@ class Browser:
         if not search:
             return
         self.search_res_lines = []
-        for index, (_, line) in enumerate(self.current_page.metalines):
-            if search in line:
+        for index, (_, ltext, _) in enumerate(self.current_page.metalines):
+            if search in ltext:
                 self.search_res_lines.append(index)
         if self.search_res_lines:
             self.move_to_search_result(Browser.SEARCH_NEXT)
