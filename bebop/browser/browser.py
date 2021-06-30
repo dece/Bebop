@@ -258,7 +258,7 @@ class Browser:
             self.edit_page()
         elif char == ord("y"):
             self.open_history()
-        elif char == ord("§"):
+        elif char == ord("m"):
             self.toggle_render_mode()
         elif char == ord("/"):
             self.search_in_page()
