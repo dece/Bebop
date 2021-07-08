@@ -63,9 +63,10 @@ def parse_gemtext(text: str, dumb=False) -> ParsedGemtext:
     preformatted = None
     for line in text.splitlines():
         line = line.rstrip()
-        # In standard mode, discard empty lines. In dumb mode, empty lines are
-        # kept as basic text.
-        if not line and not dumb:
+        # Empty lines:
+        # - in standard mode, discard them, except for preformatted blocks.
+        # - in dumb mode, keep them.
+        if not line and not (dumb or preformatted):
             continue
 
         if line.startswith(Preformatted.FENCE):
