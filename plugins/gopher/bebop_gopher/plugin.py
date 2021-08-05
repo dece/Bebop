@@ -81,7 +81,7 @@ class GopherPlugin(SchemePlugin):
         ]
 
     def open_url(self, browser: Browser, url: str) -> Optional[str]:
-        """Request an selector from a Gopher host.
+        """Request a selector from a Gopher host.
 
         As Bebop works only with URLs and not really the Gopher host/selector
         format, we use RFC 4266 (“The gopher URI Scheme”) for consistency with
@@ -240,7 +240,7 @@ def parse_source(source: str, item_type: ItemType):
     if item_type == ItemType.FILE:
         for line in source.split("\n"):
             line = line.rstrip("\r")
-            metalines.append(({"type": LineType.PARAGRAPH}, line))
+            metalines.append((LineType.PARAGRAPH, line, None))
 
     # Gopher maps are kind of the default here, so it should be quite safe to
     # parse any kind of text data.
@@ -265,12 +265,12 @@ def parse_source(source: str, item_type: ItemType):
 
             # INFO: render as a simple text line.
             if item_type == ItemType.INFO:
-                metalines.append(({"type": LineType.PARAGRAPH}, label))
+                metalines.append((LineType.PARAGRAPH, label, None))
                 continue
 
             # ERROR: render as an error line.
             if item_type == ItemType.ERROR:
-                metalines.append(({"type": LineType.ERROR}, label))
+                metalines.append((LineType.ERROR, label, None))
                 continue
 
             # Other item types are rendered as links, with a special case for
@@ -280,16 +280,12 @@ def parse_source(source: str, item_type: ItemType):
             else:
                 link_url = f"gopher://{host}:{port}/{ltype}{path}"
 
-            meta = {
-                "type": LineType.LINK,
-                "url": link_url,
-                "link": current_link_id
-            }
             links[current_link_id] = link_url
 
             icon = ICONS.get(item_type) or f"({ltype})"
             text = f"[{current_link_id}] {icon} {label}"
-            metalines.append((meta, text))
+            extra = {"url": link_url, "link_id": current_link_id}
+            metalines.append((LineType.LINK, text, extra))
             current_link_id += 1
 
     return metalines, links
