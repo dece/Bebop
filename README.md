@@ -55,11 +55,14 @@ have it installed, check out this Gemini link `gemini://dece.space/dev/faq/using
 [py-faq-http]: https://portal.mozz.us/gemini/dece.space/dev/faq/using-python-programs.gmi
 
 The easier installation method is using Pip, either user or system-wide
-installation:
+installation. I recommend user installation, but a system-wide installation
+should not cause issues as there are no dependencies.
 
 ```bash
 # User installation:
 pip3 install --user bebop-browser
+# User installation using pipx:
+pipx install bebop-browser
 # System-wide installation:
 sudo pip3 install bebop-browser
 ```
@@ -69,6 +72,8 @@ To update:
 ```bash
 # User update:
 pip3 install --user --upgrade bebop-browser
+# User update using pipx:
+pipx upgrade bebop-browser
 # System-wide update:
 sudo pip3 install --upgrade bebop-browser
 ```
