@@ -267,6 +267,8 @@ class Browser:
             self.move_to_search_result(Browser.SEARCH_NEXT)
         elif char == ord("N"):
             self.move_to_search_result(Browser.SEARCH_PREVIOUS)
+        elif char == ord("i"):
+            self.show_page_info()
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
