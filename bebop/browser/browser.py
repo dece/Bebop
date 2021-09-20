@@ -204,7 +204,7 @@ class Browser:
             try:
                 self.handle_inputs()
             except KeyboardInterrupt:
-                self.set_status("Cancelled.")
+                self.set_status("Operation cancelled (to quit, type :q).")
 
         if self.config["persistent_history"]:
             self.history.save()
