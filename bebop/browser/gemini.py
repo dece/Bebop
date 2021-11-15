@@ -24,8 +24,8 @@ MAX_URL_LEN = 1024
 def open_gemini_url(
     browser: Browser,
     url: str,
-    redirects: int =0,
-    use_cache: bool =False,
+    redirects: int = 0,
+    use_cache: bool = False,
     cert_and_key=None
 ) -> Optional[str]:
     """Open a Gemini URL and set the formatted response as content.
@@ -41,9 +41,9 @@ def open_gemini_url(
       present the user the problems found and let her decide whether to trust
       temporarily the certificate or not BUT we currently do not parse the
       certificate's fields, not even the pubkey, so this state is never used.
-    - STATE_UNKNOWN_CERT: the certificate is valid but has not been seen before;
-      as we're doing TOFU here, we could automatically trust it or let the user
-      choose. For simplicity, we always trust it permanently.
+    - STATE_UNKNOWN_CERT: the certificate is valid but has not been seen
+      before; as we're doing TOFU here, we could automatically trust it or let
+      the user choose. For simplicity, we always trust it permanently.
 
     Arguments:
     - browser: Browser object making the request.
@@ -113,11 +113,11 @@ def open_gemini_url(
 
     data = req.proceed()
     if not data:
-        browser.set_status_error(f"Server did not respond in time ({url}).")
+        browser.set_status_error(f"Response empty or timed out ({url}).")
         return None
     response = Response.parse(data)
     if not response:
-        browser.set_status_error(f"Server response parsing failed ({url}).")
+        browser.set_status_error(f"Response parsing failed ({url}).")
         return None
 
     return _handle_response(browser, response, url, redirects)
@@ -182,7 +182,11 @@ def _handle_response(
     return None
 
 
-def _handle_successful_response(browser: Browser, response: Response, url: str):
+def _handle_successful_response(
+    browser: Browser,
+    response: Response,
+    url: str
+):
     """Handle a successful response content from a Gemini server.
 
     According to the MIME type received or inferred, the response is either
@@ -215,7 +219,8 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
                 error = f"Unknown encoding {encoding}."
             else:
                 render_opts = get_render_options(browser.config)
-                pref_mode = get_url_render_mode_pref(browser.capsule_prefs, url)
+                pref_mode = get_url_render_mode_pref(
+                    browser.capsule_prefs, url)
                 if pref_mode:
                     render_opts.mode = pref_mode
                 page = Page.from_gemtext(text, render_opts)
@@ -255,7 +260,7 @@ def _handle_successful_response(browser: Browser, response: Response, url: str):
 def _handle_input_request(
     browser: Browser,
     from_url: str,
-    message: str =None
+    message: str = None
 ) -> Optional[str]:
     """Focus command-line to pass input to the server.
 
@@ -311,11 +316,12 @@ def _handle_cert_required(
 
 def select_identity(identities: list):
     """Let user select the appropriate identity among candidates."""
-    # TODO support multiple identities; for now we just use the first available.
+    # TODO support multiple identities; for now we just use the first
+    # available.
     return identities[0] if identities else None
 
 
-def create_identity(browser: Browser, url: str, reason: Optional[str] =None):
+def create_identity(browser: Browser, url: str, reason: Optional[str] = None):
     """Walk the user through identity creation.
 
     Returns:
@@ -352,7 +358,7 @@ def create_identity(browser: Browser, url: str, reason: Optional[str] =None):
 
 
 def forget_certificate(browser: Browser, hostname: str):
-    """Remove the fingerprint associated to this hostname for the cert stash."""
+    """Remove the fingerprint for this hostname from the cert stash."""
     key = browser.prompt(f"Remove fingerprint for {hostname}?")
     if key != "y":
         browser.reset_status()
@@ -360,4 +366,5 @@ def forget_certificate(browser: Browser, hostname: str):
     if untrust_fingerprint(browser.stash, hostname):
         browser.set_status(f"Known certificate for {hostname} removed.")
     else:
-        browser.set_status_error(f"Known certificate for {hostname} not found.")
+        browser.set_status_error(
+            f"Known certificate for {hostname} not found.")

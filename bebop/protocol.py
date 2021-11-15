@@ -26,8 +26,8 @@ class Request:
     sending the request header and receiving the response:
 
     1. Instantiate a Request.
-    2. `connect` opens the connection and aborts it or leaves the caller free to
-       check stuff.
+    2. `connect` opens the connection and aborts it or leaves the caller free
+      to check stuff.
     3. `proceed` or `abort` can be called.
 
     Attributes:
@@ -35,8 +35,8 @@ class Request:
     - cert_stash: certificate stash to use an possibly update.
     - state: request state.
     - hostname: hostname derived from url, stored when `connect` is called.
-    - payload: bytes object of the payload request; build during `connect`, used
-      during `proceed`.
+    - payload: bytes object of the payload request; build during `connect`,
+      used during `proceed`.
     - ssock: TLS-wrapped socket.
     - cert_validation: validation results dict, set after certificate has been
       reviewed.
@@ -79,12 +79,12 @@ class Request:
         certificate status is not CertStatus.VALID (Request.STATE_OK).
 
         If connect returns False, the secure socket is aborted before return so
-        there is no need to call `abort`. If connect returns True, it is up to the
-        caller to decide whether to continue (call `proceed`) the connection or
-        abort it (call `abort`).
+        there is no need to call `abort`. If connect returns True, it is up to
+        the caller to decide whether to continue (call `proceed`) the
+        connection or abort it (call `abort`).
 
-        The request `state` is updated to reflect the connection state after the
-        function returns. The following list describes states related to
+        The request `state` is updated to reflect the connection state after
+        the function returns. The following list describes states related to
         connection failure (False returned):
 
         - STATE_INVALID_URL: URL is not valid.
@@ -95,8 +95,8 @@ class Request:
         For all request states from now on, the `cert_validation` attribute is
         updated with the result of the certificate validation.
 
-        The following list describes states related to validation failure (False
-        returned):
+        The following list describes states related to validation failure
+        (False returned):
 
         - STATE_ERROR_CERT: server certificate could not be validated at all.
         - STATE_UNTRUSTED_CERT: server certificate mismatched the known
@@ -117,7 +117,8 @@ class Request:
 
         - The DER hash is compared against the fingerprint for this hostname
           *and port*; the specification does not tell much about that, but we
-          are slightly more restrictive here by adding the port in the equation.
+          are slightly more restrictive here by adding the port in the
+          equation.
         - The state STATE_INVALID_CERT is actually never used in Bebop because
           of the current tendency to ignore any certificate fields and only
           check the whole cert fingerprint. Here it is considered the same as a
