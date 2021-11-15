@@ -111,7 +111,11 @@ def open_gemini_url(
             trust_always=True
         )
 
-    data = req.proceed()
+    try:
+        data = req.proceed()
+    except OSError:
+        browser.set_status_error(f"Connection error ({url}).")
+        return None
     if not data:
         browser.set_status_error(f"Response empty or timed out ({url}).")
         return None
