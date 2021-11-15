@@ -69,6 +69,7 @@ class Browser:
 
     SEARCH_NEXT = 0
     SEARCH_PREVIOUS = 1
+    MAX_REDIRECTIONS = 5
 
     def __init__(self, config, cert_stash):
         self.config = config
@@ -420,7 +421,7 @@ class Browser:
         - history: whether the URL should be pushed to history on success.
         - use_cache: whether we should look for an already cached document.
         """
-        if redirects > 5:
+        if redirects > self.MAX_REDIRECTIONS:
             self.set_status_error(f"Too many redirections ({url}).")
             return
 
