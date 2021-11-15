@@ -124,7 +124,8 @@ def open_gemini_url(
         browser.set_status_error(f"Response parsing failed ({url}).")
         return None
 
-    return _handle_response(browser, response, url, redirects)
+    return _handle_response(browser, response, url, redirects,
+                            used_cert=cert_and_key is not None)
 
 
 def _handle_untrusted_cert(browser: Browser, request: Request):
@@ -151,7 +152,8 @@ def _handle_response(
     browser: Browser,
     response: Response,
     url: str,
-    redirects: int
+    redirects: int,
+    used_cert: bool = False,
 ) -> Optional[str]:
     """Handle a response from a Gemini server.
 
@@ -175,7 +177,11 @@ def _handle_response(
     elif response.generic_code == 10:
         return _handle_input_request(browser, url, response.meta)
     elif response.code == 60:
-        return _handle_cert_required(browser, response, url, redirects)
+        if used_cert:
+            error = "Server ignored our certificate."
+            browser.set_status_error(error)
+        else:
+            return _handle_cert_required(browser, response, url, redirects)
     elif response.code in (61, 62):
         details = response.meta or Response.code.name
         error = f"Client certificate error: {details}"
