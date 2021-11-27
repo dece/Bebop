@@ -29,11 +29,13 @@ handle big files (e.g. gemini://tilde.team/~tomasino/irc/log.txt)
 allow encoding overrides (useful for gopher i guess)
 config for web browser, default to webbrowser module
 use pubkeys instead of the whole DER hash for TOFU
+reload after forgetting old cert
 specify external commands interface (exec, run, pipes)
 table of contents
 better default editor than vim
 search engine
 auto-open some media types
+use about scheme instead of bebop
 don't store explicit port 1965 in URL prefixes (e.g. for identities)
 fix shifted line detection when text goes belong the horizontal limit
 auto-rewrite missing "/" in empty URL paths

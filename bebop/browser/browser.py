@@ -19,7 +19,7 @@ from bebop.bookmarks import (
 )
 from bebop.colors import A_ITALIC, ColorPair, init_colors
 from bebop.command_line import CommandLine
-from bebop.external import open_external_program
+from bebop.external import open_external_program, substitute_external_command
 from bebop.fs import get_capsule_prefs_path, get_identities_list_path
 from bebop.help import get_help
 from bebop.history import History
@@ -269,6 +269,8 @@ class Browser:
             self.move_to_search_result(Browser.SEARCH_PREVIOUS)
         elif char == ord("i"):
             self.show_page_info()
+        elif char == ord("!"):
+            self.quick_command("exec")
         elif curses.ascii.isdigit(char):
             self.handle_digit_input(char)
         elif char == curses.KEY_MOUSE:
@@ -385,6 +387,8 @@ class Browser:
         else:
             if command in ("o", "open"):
                 self.open_url(words[1])
+            elif command == "exec":
+                self.exec_external_command(" ".join(words[1:]))
             elif command == "forget-certificate":
                 from bebop.browser.gemini import forget_certificate
                 forget_certificate(self, words[1])
@@ -789,7 +793,7 @@ class Browser:
         encoding = page.encoding or "unk. encoding"
         size = f"{len(page.source)} chars"
         lines = f"{len(page.metalines)} lines"
-        info = f"{mime}  {encoding}  {size}  {lines}"
+        info = f"{mime}; {encoding}; {size}; {lines}"
         self.set_status(info)
 
     def set_render_mode(self, mode):
@@ -890,3 +894,16 @@ class Browser:
                 continue
 
             logging.info(f"Loaded plugin {plugin_name}.")
+
+    def exec_external_command(self, command):
+        if not self.current_page:
+            return
+        command = substitute_external_command(
+                command, self.current_url, self.current_page)
+        self.set_status(f"Launching `{command}`…")
+        success = open_external_program(command)
+        if success:
+            self.reset_status()
+        else:
+            self.set_status_error("Command failed.")
+        self.refresh_windows()

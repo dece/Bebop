@@ -102,7 +102,8 @@ def parse_gemtext(text: str, dumb=False) -> ParsedGemtext:
         match = Blockquote.RE.match(line)
         if match:
             text = match.groups()[0]
-            elements.append(Blockquote(text))
+            if text or dumb:
+                elements.append(Blockquote(text))
             continue
 
         match = ListItem.RE.match(line)

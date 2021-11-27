@@ -172,7 +172,7 @@ def _handle_response(
             redirects=redirects + 1
         )
     elif response.generic_code in (40, 50):
-        error = f"Server error: {response.meta or Response.code.name}"
+        error = f"Server error: {response.meta or response.code.name}"
         browser.set_status_error(error)
     elif response.generic_code == 10:
         return _handle_input_request(browser, url, response.meta)
