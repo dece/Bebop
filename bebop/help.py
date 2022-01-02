@@ -104,7 +104,7 @@ def get_help(config, plugins):
     config_list = "\n".join(
         (
             f"* {key} = {config[key]} (default {repr(DEFAULT_CONFIG[key])})"
-            if config[key] != DEFAULT_CONFIG[key]
+            if key in DEFAULT_CONFIG and config[key] != DEFAULT_CONFIG[key]
             else f"* {key} = {config[key]}"
         )
         for key in sorted(config)
