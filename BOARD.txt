@@ -34,6 +34,9 @@ table of contents
 better default editor than vim
 search engine
 auto-open some media types
+don't store explicit port 1965 in URL prefixes (e.g. for identities)
+fix shifted line detection when text goes belong the horizontal limit
+auto-rewrite missing "/" in empty URL paths
 
 
 
