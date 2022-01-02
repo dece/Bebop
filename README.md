@@ -54,9 +54,8 @@ have it installed, check out this Gemini link `gemini://dece.space/dev/faq/using
 
 [py-faq-http]: https://portal.mozz.us/gemini/dece.space/dev/faq/using-python-programs.gmi
 
-The easier installation method is using Pip, either user or system-wide
-installation. I recommend user installation, but a system-wide installation
-should not cause issues as there are no dependencies.
+The recommended installation method is using Pipx, but using Pip is fine, either
+user or system-wide installation.
 
 ```bash
 # User installation:
@@ -123,6 +122,16 @@ Here is a list of plugins I did, available on PyPI:
 
 [plugin-finger]: plugins/finger/README.md
 [plugin-gopher]: plugins/gopher/README.md
+
+Plugins have to be installed in the same Python environment as Bebop. If you
+installed Bebop using Pipx, this is done using the `inject` command.
+
+```bash
+# Installating the Gopher plugin in the user environment:
+pip3 install --user bebop-browser-gopher
+# Installating the Gopher plugin for a Pipx installation:
+pipx inject bebop-browser bebop-browser-gopher
+```
 
 
 
