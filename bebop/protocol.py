@@ -153,6 +153,11 @@ class Request:
             self.state = Request.STATE_CONNECTION_FAILED
             self.error = exc.strerror
             return False
+        except ValueError as exc:
+            self.state = Request.STATE_INVALID_URL
+            self.error = "Some connection parameter is wrong, check again."
+            logging.error(f"ValueError during connection creation: {exc}")
+            return False
 
         # Setup TLS.
         context = Request.get_ssl_context()
